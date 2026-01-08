@@ -1,0 +1,9 @@
+{
+	"id": "claude-rock",
+	"name": "Claude Rock",
+	"version": "0.1.0",
+	"minAppVersion": "0.15.0",
+	"description": "Chat with Claude AI using Claude Code CLI",
+	"author": "Timofey Grushko",
+	"isDesktopOnly": true
+}
