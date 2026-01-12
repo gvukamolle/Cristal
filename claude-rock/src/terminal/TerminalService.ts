@@ -240,4 +240,143 @@ export class TerminalService extends EventEmitter {
 	getProfiles(): TerminalProfile[] {
 		return this.settings.profiles;
 	}
+
+	/**
+	 * Execute a command headlessly and return output
+	 * Used for getting CLI status without user-visible terminal
+	 *
+	 * @param command - The command to run (e.g., "codex")
+	 * @param input - Input to send to the process (e.g., "/status\nexit\n")
+	 * @param timeoutMs - Timeout in milliseconds
+	 * @returns Collected output or null on error
+	 */
+	async executeCommandHeadless(
+		command: string,
+		input: string,
+		timeoutMs: number = 5000
+	): Promise<string | null> {
+		return new Promise(async (resolve) => {
+			let output = "";
+			let timeoutHandle: ReturnType<typeof setTimeout> | null = null;
+			let sessionId: string | null = null;
+
+			const cleanup = () => {
+				if (timeoutHandle) {
+					clearTimeout(timeoutHandle);
+					timeoutHandle = null;
+				}
+				if (sessionId) {
+					this.killSession(sessionId);
+				}
+			};
+
+			try {
+				// Check Python availability if not checked yet
+				if (!this.pythonChecked) {
+					await this.checkPython();
+				}
+
+				// Create backend (prefer Python PTY for full terminal emulation)
+				const { backend, backendType } = await this.createBackend(this.getProfile());
+
+				sessionId = `headless-${Date.now()}`;
+
+				// Build extended PATH with common node locations (macOS GUI apps don't inherit shell PATH)
+				const homedir = require("os").homedir();
+				const extraPaths = [
+					"/usr/local/bin",           // Homebrew Intel
+					"/opt/homebrew/bin",        // Homebrew Apple Silicon
+					`${homedir}/.nvm/versions/node/v22/bin`,  // NVM (common version)
+					`${homedir}/.nvm/versions/node/v20/bin`,  // NVM LTS
+					`${homedir}/.nvm/versions/node/v18/bin`,  // NVM older LTS
+					`${homedir}/.npm-global/bin`,
+					`${homedir}/.local/bin`,
+					"/usr/bin",
+					"/bin"
+				];
+				const currentPath = process.env.PATH || "";
+				const extendedPath = [...extraPaths, ...currentPath.split(":")].join(":");
+
+				// Spawn with custom shell command
+				const spawnOptions: PtySpawnOptions = {
+					shell: command,
+					args: [],
+					cwd: this.vaultPath,
+					cols: 120,
+					rows: 40,
+					env: {
+						...process.env as Record<string, string>,
+						PATH: extendedPath
+					}
+				};
+
+				await backend.spawn(spawnOptions);
+
+				// Collect data
+				backend.on("data", (data: string) => {
+					output += data;
+				});
+
+				// Handle exit
+				backend.on("exit", () => {
+					cleanup();
+					resolve(output || null);
+				});
+
+				backend.on("error", (error: Error) => {
+					console.log("[Terminal] Headless error:", error.message);
+					cleanup();
+					resolve(null);
+				});
+
+				// Store session for cleanup
+				this.sessions.set(sessionId, {
+					backend,
+					session: {
+						id: sessionId,
+						backendType,
+						profile: this.getProfile(),
+						createdAt: Date.now()
+					}
+				});
+
+				// Send input after short delay (allow CLI to initialize)
+				setTimeout(() => {
+					backend.write(input);
+				}, 500);
+
+				// Set timeout
+				timeoutHandle = setTimeout(() => {
+					console.log("[Terminal] Headless timeout, returning collected output");
+					cleanup();
+					resolve(output || null);
+				}, timeoutMs);
+
+			} catch (error) {
+				console.log("[Terminal] Headless execution error:", error);
+				cleanup();
+				resolve(null);
+			}
+		});
+	}
+
+	/**
+	 * Write to an existing session
+	 */
+	writeToSession(sessionId: string, data: string): void {
+		const entry = this.sessions.get(sessionId);
+		if (entry) {
+			entry.backend.write(data);
+		}
+	}
+
+	/**
+	 * Resize an existing session
+	 */
+	resizeSession(sessionId: string, cols: number, rows: number): void {
+		const entry = this.sessions.get(sessionId);
+		if (entry) {
+			entry.backend.resize(cols, rows);
+		}
+	}
 }

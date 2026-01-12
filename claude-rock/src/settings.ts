@@ -68,6 +68,228 @@ export class CristalSettingTab extends PluginSettingTab {
 		this.createStatInline(inline, this.locale.today, this.formatTokens(stats.todayTokens));
 		this.createStatInline(inline, this.locale.week, this.formatTokens(stats.weekTokens));
 		this.createStatInline(inline, this.locale.month, this.formatTokens(stats.monthTokens));
+
+		// Account limits section
+		this.displayAccountLimitsSection(usageSection);
+	}
+
+	private displayAccountLimitsSection(containerEl: HTMLElement): void {
+		const limitsSection = containerEl.createDiv({ cls: "cristal-account-limits" });
+		limitsSection.createEl("h4", { text: this.locale.accountLimits });
+
+		// Container for limits data
+		const limitsContainer = limitsSection.createDiv({ cls: "cristal-limits-data" });
+
+		// Check limits button
+		const btnContainer = limitsSection.createDiv({ cls: "cristal-limits-btn-container" });
+		const checkBtn = btnContainer.createEl("button", {
+			text: this.locale.checkLimits,
+			cls: "cristal-check-limits-btn"
+		});
+		setIcon(checkBtn.createSpan({ cls: "cristal-btn-icon-left" }), "refresh-cw");
+
+		checkBtn.addEventListener("click", async () => {
+			await this.loadAccountLimits(limitsContainer);
+		});
+	}
+
+	private async loadAccountLimits(container: HTMLElement): Promise<void> {
+		container.empty();
+		container.createEl("span", { cls: "cristal-limits-loading", text: this.locale.loadingLimits });
+
+		const { UsageLimitsService } = await import("./UsageLimitsService");
+		const service = new UsageLimitsService();
+
+		container.empty();
+
+		// Claude limits
+		const claudeAgent = this.plugin.getAgentByCliType("claude");
+		if (claudeAgent?.enabled) {
+			const claudeLimits = await service.fetchClaudeUsage();
+			this.renderClaudeLimits(container, claudeLimits);
+		}
+
+		// Codex limits (parsed from session files)
+		const codexAgent = this.plugin.getAgentByCliType("codex");
+		if (codexAgent?.enabled) {
+			const codexLimits = await service.fetchCodexUsage();
+			this.renderCodexLimits(container, codexLimits);
+		}
+
+		// If no agents enabled
+		if (!claudeAgent?.enabled && !codexAgent?.enabled) {
+			container.createEl("span", {
+				cls: "cristal-limits-note",
+				text: "No agents enabled"
+			});
+		}
+	}
+
+	private renderClaudeLimits(container: HTMLElement, limits: import("./UsageLimitsService").ClaudeUsageLimits): void {
+		container.empty();
+
+		if (limits.error) {
+			const errorEl = container.createDiv({ cls: "cristal-limits-error" });
+			if (limits.error === "not_authenticated") {
+				errorEl.createEl("span", { text: this.locale.notAuthenticated });
+				errorEl.createEl("br");
+				errorEl.createEl("span", { cls: "cristal-limits-note", text: this.locale.notAuthenticatedDesc });
+			} else {
+				errorEl.createEl("span", { text: this.locale.limitsError });
+			}
+			return;
+		}
+
+		const claudeSection = container.createDiv({ cls: "cristal-agent-limits" });
+		claudeSection.createEl("strong", { text: "Claude Code" });
+
+		// 5-hour limit (API returns 0-100 percentage)
+		this.createProgressBar(
+			claudeSection,
+			this.locale.fiveHourLimit,
+			limits.fiveHour.utilization,
+			limits.fiveHour.resetsAt
+		);
+
+		// Weekly limit
+		this.createProgressBar(
+			claudeSection,
+			this.locale.weeklyLimit,
+			limits.sevenDay.utilization,
+			limits.sevenDay.resetsAt
+		);
+
+		// Opus limit (if present)
+		if (limits.sevenDayOpus && limits.sevenDayOpus.utilization > 0) {
+			this.createProgressBar(
+				claudeSection,
+				this.locale.opusLimit,
+				limits.sevenDayOpus.utilization,
+				limits.sevenDayOpus.resetsAt
+			);
+		}
+
+		// Sonnet limit (if present)
+		if (limits.sevenDaySonnet && limits.sevenDaySonnet.utilization > 0) {
+			this.createProgressBar(
+				claudeSection,
+				this.locale.sonnetLimit,
+				limits.sevenDaySonnet.utilization,
+				limits.sevenDaySonnet.resetsAt
+			);
+		}
+	}
+
+	private renderCodexLimits(container: HTMLElement, limits: import("./UsageLimitsService").CodexUsageLimits): void {
+		if (limits.error) {
+			const errorEl = container.createDiv({ cls: "cristal-limits-error" });
+			if (limits.error === "not_authenticated" || limits.error === "no_sessions") {
+				errorEl.createEl("span", { text: this.locale.notAuthenticated });
+				errorEl.createEl("br");
+				errorEl.createEl("span", { cls: "cristal-limits-note", text: this.locale.notAuthenticatedDesc });
+			} else {
+				errorEl.createEl("span", { text: this.locale.limitsError });
+			}
+			return;
+		}
+
+		const codexSection = container.createDiv({ cls: "cristal-agent-limits" });
+		codexSection.createEl("strong", { text: "Codex" });
+
+		// 5-hour limit
+		this.createProgressBar(
+			codexSection,
+			this.locale.fiveHourLimit,
+			limits.fiveHour.utilization,
+			limits.fiveHour.resetsAt
+		);
+
+		// Weekly limit
+		this.createProgressBar(
+			codexSection,
+			this.locale.weeklyLimit,
+			limits.sevenDay.utilization,
+			limits.sevenDay.resetsAt
+		);
+	}
+
+	private createProgressBar(
+		container: HTMLElement,
+		label: string,
+		percent: number,
+		resetsAt: string | null,
+		showLeft: boolean = false
+	): void {
+		const row = container.createDiv({ cls: "cristal-progress-row" });
+
+		// Top line: label + percent
+		const topLine = row.createDiv({ cls: "cristal-progress-top" });
+		topLine.createDiv({ cls: "cristal-progress-label", text: label });
+		const percentText = showLeft ? `${Math.round(100 - percent)}% ${this.locale.left}` : `${Math.round(percent)}% ${this.locale.used}`;
+		topLine.createDiv({ cls: "cristal-progress-percent", text: percentText });
+
+		// Progress bar
+		const barContainer = row.createDiv({ cls: "cristal-progress-bar" });
+		const fill = barContainer.createDiv({ cls: "cristal-progress-fill" });
+		fill.style.width = `${Math.min(100, Math.max(0, percent))}%`;
+
+		// Color based on usage
+		if (percent >= 90) {
+			fill.addClass("cristal-progress-danger");
+		} else if (percent >= 70) {
+			fill.addClass("cristal-progress-warning");
+		}
+
+		// Reset time
+		if (resetsAt) {
+			const resetText = this.formatResetTime(resetsAt);
+			row.createDiv({ cls: "cristal-progress-reset", text: resetText });
+		}
+	}
+
+	private formatResetTime(isoString: string): string {
+		try {
+			const date = new Date(isoString);
+			if (isNaN(date.getTime())) {
+				// Not a valid ISO date, return as-is (e.g., "18:00" from Codex)
+				return `${this.locale.resetsAt} ${isoString}`;
+			}
+
+			// Format absolute date/time
+			const absTime = date.toLocaleString([], {
+				day: "numeric",
+				month: "short",
+				hour: "2-digit",
+				minute: "2-digit"
+			});
+
+			// Calculate time remaining
+			const now = new Date();
+			const diffMs = date.getTime() - now.getTime();
+
+			if (diffMs <= 0) {
+				return `${this.locale.resetsAt} ${absTime}`;
+			}
+
+			const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+			const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+			const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+
+			// Build relative time string
+			let relTime = this.locale.resetsIn + " ";
+			if (days > 0) {
+				relTime += `${days}${this.locale.days} ${hours}${this.locale.hours}`;
+			} else if (hours > 0) {
+				relTime += `${hours}${this.locale.hours} ${minutes}${this.locale.minutes}`;
+			} else {
+				relTime += `${minutes}${this.locale.minutes}`;
+			}
+
+			// Return both: "через 3д 10ч (15 янв. 22:00)"
+			return `${relTime} (${absTime})`;
+		} catch {
+			return `${this.locale.resetsAt} ${isoString}`;
+		}
 	}
 
 	private displayAgentsSection(containerEl: HTMLElement): void {

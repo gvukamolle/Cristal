@@ -115,6 +115,26 @@ export interface SettingsLocale {
 	startIntegration: string;
 	openTerminal: string;
 	integrationNote: string;
+
+	// Account Limits
+	accountLimits: string;
+	checkLimits: string;
+	loadingLimits: string;
+	fiveHourLimit: string;
+	weeklyLimit: string;
+	opusLimit: string;
+	sonnetLimit: string;
+	resetsAt: string;
+	resetsIn: string;
+	days: string;
+	hours: string;
+	minutes: string;
+	used: string;
+	left: string;
+	notAuthenticated: string;
+	notAuthenticatedDesc: string;
+	limitsError: string;
+	loginToCli: string;
 }
 
 export const SETTINGS_LOCALES: Record<LanguageCode, SettingsLocale> = {
@@ -232,7 +252,27 @@ export const SETTINGS_LOCALES: Record<LanguageCode, SettingsLocale> = {
 		// Terminal integration
 		startIntegration: "Начать интеграцию",
 		openTerminal: "Открыть терминал",
-		integrationNote: "Откроет терминал и начнёт установку CLI"
+		integrationNote: "Откроет терминал и начнёт установку CLI",
+
+		// Account Limits
+		accountLimits: "Лимиты аккаунта",
+		checkLimits: "Проверить лимиты",
+		loadingLimits: "Загрузка...",
+		fiveHourLimit: "5-часовой лимит",
+		weeklyLimit: "Недельный лимит",
+		opusLimit: "Opus лимит",
+		sonnetLimit: "Sonnet лимит",
+		resetsAt: "Сброс:",
+		resetsIn: "через",
+		days: "д",
+		hours: "ч",
+		minutes: "мин",
+		used: "использовано",
+		left: "осталось",
+		notAuthenticated: "Не авторизован",
+		notAuthenticatedDesc: "Войдите в CLI для просмотра лимитов",
+		limitsError: "Ошибка получения лимитов",
+		loginToCli: "Войти в CLI"
 	},
 
 	en: {
@@ -349,7 +389,27 @@ export const SETTINGS_LOCALES: Record<LanguageCode, SettingsLocale> = {
 		// Terminal integration
 		startIntegration: "Start Integration",
 		openTerminal: "Open Terminal",
-		integrationNote: "Opens terminal and starts CLI installation"
+		integrationNote: "Opens terminal and starts CLI installation",
+
+		// Account Limits
+		accountLimits: "Account limits",
+		checkLimits: "Check limits",
+		loadingLimits: "Loading...",
+		fiveHourLimit: "5-hour limit",
+		weeklyLimit: "Weekly limit",
+		opusLimit: "Opus limit",
+		sonnetLimit: "Sonnet limit",
+		resetsAt: "Resets:",
+		resetsIn: "in",
+		days: "d",
+		hours: "h",
+		minutes: "min",
+		used: "used",
+		left: "left",
+		notAuthenticated: "Not authenticated",
+		notAuthenticatedDesc: "Log in to CLI to view limits",
+		limitsError: "Failed to fetch limits",
+		loginToCli: "Log in to CLI"
 	},
 
 	fr: {
@@ -466,7 +526,27 @@ export const SETTINGS_LOCALES: Record<LanguageCode, SettingsLocale> = {
 		// Terminal integration
 		startIntegration: "Démarrer l'intégration",
 		openTerminal: "Ouvrir le terminal",
-		integrationNote: "Ouvre le terminal et démarre l'installation du CLI"
+		integrationNote: "Ouvre le terminal et démarre l'installation du CLI",
+
+		// Account Limits
+		accountLimits: "Limites du compte",
+		checkLimits: "Vérifier les limites",
+		loadingLimits: "Chargement...",
+		fiveHourLimit: "Limite 5 heures",
+		weeklyLimit: "Limite hebdomadaire",
+		opusLimit: "Limite Opus",
+		sonnetLimit: "Limite Sonnet",
+		resetsAt: "Réinitialisation:",
+		resetsIn: "dans",
+		days: "j",
+		hours: "h",
+		minutes: "min",
+		used: "utilisé",
+		left: "restant",
+		notAuthenticated: "Non authentifié",
+		notAuthenticatedDesc: "Connectez-vous au CLI pour voir les limites",
+		limitsError: "Échec de récupération des limites",
+		loginToCli: "Se connecter au CLI"
 	},
 
 	de: {
@@ -583,7 +663,27 @@ export const SETTINGS_LOCALES: Record<LanguageCode, SettingsLocale> = {
 		// Terminal integration
 		startIntegration: "Integration starten",
 		openTerminal: "Terminal öffnen",
-		integrationNote: "Öffnet das Terminal und startet die CLI-Installation"
+		integrationNote: "Öffnet das Terminal und startet die CLI-Installation",
+
+		// Account Limits
+		accountLimits: "Kontolimits",
+		checkLimits: "Limits prüfen",
+		loadingLimits: "Laden...",
+		fiveHourLimit: "5-Stunden-Limit",
+		weeklyLimit: "Wochenlimit",
+		opusLimit: "Opus-Limit",
+		sonnetLimit: "Sonnet-Limit",
+		resetsAt: "Zurücksetzen:",
+		resetsIn: "in",
+		days: "T",
+		hours: "Std",
+		minutes: "Min",
+		used: "verwendet",
+		left: "übrig",
+		notAuthenticated: "Nicht authentifiziert",
+		notAuthenticatedDesc: "Melden Sie sich beim CLI an, um Limits anzuzeigen",
+		limitsError: "Limits konnten nicht abgerufen werden",
+		loginToCli: "Beim CLI anmelden"
 	},
 
 	es: {
@@ -700,7 +800,27 @@ export const SETTINGS_LOCALES: Record<LanguageCode, SettingsLocale> = {
 		// Terminal integration
 		startIntegration: "Iniciar integración",
 		openTerminal: "Abrir terminal",
-		integrationNote: "Abre el terminal e inicia la instalación del CLI"
+		integrationNote: "Abre el terminal e inicia la instalación del CLI",
+
+		// Account Limits
+		accountLimits: "Límites de cuenta",
+		checkLimits: "Verificar límites",
+		loadingLimits: "Cargando...",
+		fiveHourLimit: "Límite de 5 horas",
+		weeklyLimit: "Límite semanal",
+		opusLimit: "Límite Opus",
+		sonnetLimit: "Límite Sonnet",
+		resetsAt: "Se reinicia:",
+		resetsIn: "en",
+		days: "d",
+		hours: "h",
+		minutes: "min",
+		used: "usado",
+		left: "restante",
+		notAuthenticated: "No autenticado",
+		notAuthenticatedDesc: "Inicia sesión en CLI para ver los límites",
+		limitsError: "Error al obtener límites",
+		loginToCli: "Iniciar sesión en CLI"
 	},
 
 	hi: {
@@ -817,7 +937,27 @@ export const SETTINGS_LOCALES: Record<LanguageCode, SettingsLocale> = {
 		// Terminal integration
 		startIntegration: "एकीकरण शुरू करें",
 		openTerminal: "टर्मिनल खोलें",
-		integrationNote: "टर्मिनल खोलता है और CLI इंस्टॉलेशन शुरू करता है"
+		integrationNote: "टर्मिनल खोलता है और CLI इंस्टॉलेशन शुरू करता है",
+
+		// Account Limits
+		accountLimits: "खाता सीमाएं",
+		checkLimits: "सीमाएं जांचें",
+		loadingLimits: "लोड हो रहा है...",
+		fiveHourLimit: "5-घंटे की सीमा",
+		weeklyLimit: "साप्ताहिक सीमा",
+		opusLimit: "Opus सीमा",
+		sonnetLimit: "Sonnet सीमा",
+		resetsAt: "रीसेट:",
+		resetsIn: "में",
+		days: "दिन",
+		hours: "घं",
+		minutes: "मिनट",
+		used: "उपयोग किया",
+		left: "बाकी",
+		notAuthenticated: "प्रमाणित नहीं",
+		notAuthenticatedDesc: "सीमाएं देखने के लिए CLI में लॉग इन करें",
+		limitsError: "सीमाएं प्राप्त करने में विफल",
+		loginToCli: "CLI में लॉग इन करें"
 	},
 
 	zh: {
@@ -934,7 +1074,27 @@ export const SETTINGS_LOCALES: Record<LanguageCode, SettingsLocale> = {
 		// Terminal integration
 		startIntegration: "开始集成",
 		openTerminal: "打开终端",
-		integrationNote: "打开终端并开始 CLI 安装"
+		integrationNote: "打开终端并开始 CLI 安装",
+
+		// Account Limits
+		accountLimits: "账户限制",
+		checkLimits: "检查限制",
+		loadingLimits: "加载中...",
+		fiveHourLimit: "5小时限制",
+		weeklyLimit: "每周限制",
+		opusLimit: "Opus 限制",
+		sonnetLimit: "Sonnet 限制",
+		resetsAt: "重置时间:",
+		resetsIn: "剩余",
+		days: "天",
+		hours: "小时",
+		minutes: "分钟",
+		used: "已用",
+		left: "剩余",
+		notAuthenticated: "未认证",
+		notAuthenticatedDesc: "登录 CLI 查看限制",
+		limitsError: "获取限制失败",
+		loginToCli: "登录 CLI"
 	},
 
 	ja: {
@@ -1051,7 +1211,27 @@ export const SETTINGS_LOCALES: Record<LanguageCode, SettingsLocale> = {
 		// Terminal integration
 		startIntegration: "統合を開始",
 		openTerminal: "ターミナルを開く",
-		integrationNote: "ターミナルを開いてCLIのインストールを開始します"
+		integrationNote: "ターミナルを開いてCLIのインストールを開始します",
+
+		// Account Limits
+		accountLimits: "アカウント制限",
+		checkLimits: "制限を確認",
+		loadingLimits: "読み込み中...",
+		fiveHourLimit: "5時間制限",
+		weeklyLimit: "週間制限",
+		opusLimit: "Opus 制限",
+		sonnetLimit: "Sonnet 制限",
+		resetsAt: "リセット:",
+		resetsIn: "あと",
+		days: "日",
+		hours: "時間",
+		minutes: "分",
+		used: "使用済み",
+		left: "残り",
+		notAuthenticated: "未認証",
+		notAuthenticatedDesc: "制限を表示するには CLI にログイン",
+		limitsError: "制限の取得に失敗",
+		loginToCli: "CLI にログイン"
 	}
 };
 
