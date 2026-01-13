@@ -347,6 +347,48 @@ const COMMAND_LOCALES: Record<string, CommandLocales> = {
 			description: "説明の複雑さを調整",
 			prompt: ""
 		}
+	},
+	compact: {
+		en: {
+			name: "Compact",
+			description: "Compress conversation context",
+			prompt: "__COMPACT__"
+		},
+		ru: {
+			name: "Сжать",
+			description: "Сжать контекст разговора",
+			prompt: "__COMPACT__"
+		},
+		fr: {
+			name: "Compacter",
+			description: "Compresser le contexte de conversation",
+			prompt: "__COMPACT__"
+		},
+		de: {
+			name: "Komprimieren",
+			description: "Gesprächskontext komprimieren",
+			prompt: "__COMPACT__"
+		},
+		es: {
+			name: "Compactar",
+			description: "Comprimir el contexto de conversación",
+			prompt: "__COMPACT__"
+		},
+		hi: {
+			name: "संकुचित करें",
+			description: "वार्तालाप संदर्भ को संकुचित करें",
+			prompt: "__COMPACT__"
+		},
+		zh: {
+			name: "压缩",
+			description: "压缩对话上下文",
+			prompt: "__COMPACT__"
+		},
+		ja: {
+			name: "圧縮",
+			description: "会話コンテキストを圧縮",
+			prompt: "__COMPACT__"
+		}
 	}
 };
 
@@ -359,7 +401,8 @@ const BUILTIN_COMMAND_IDS = [
 	{ id: "fix", command: "/fix", icon: "check-circle" },
 	{ id: "bullets", command: "/bullets", icon: "list-minus" },
 	{ id: "questions", command: "/questions", icon: "help-circle" },
-	{ id: "difficulty", command: "/difficulty", icon: "graduation-cap" }
+	{ id: "difficulty", command: "/difficulty", icon: "graduation-cap" },
+	{ id: "compact", command: "/compact", icon: "archive" }
 ];
 
 /**

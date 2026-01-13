@@ -87,7 +87,7 @@ export class CodexService extends EventEmitter {
 		this.workingDir = dir;
 	}
 
-	async sendMessage(prompt: string, sessionId: string, threadId?: string, model?: string): Promise<void> {
+	async sendMessage(prompt: string, sessionId: string, threadId?: string, model?: string, additionalDirs?: string[]): Promise<void> {
 		// Abort existing process for this sessionId
 		const existingProcess = this.processes.get(sessionId);
 		if (existingProcess) {
@@ -97,8 +97,15 @@ export class CodexService extends EventEmitter {
 
 		this.pendingMessages.set(sessionId, { text: "", tools: [] });
 
-		// Build args - always use full-access mode
-		const args = ["exec", "--json", "--skip-git-repo-check", "--sandbox", "danger-full-access"];
+		// Build args - use workspace-write sandbox for security (only vault access by default)
+		const args = ["exec", "--json", "--skip-git-repo-check", "--sandbox", "workspace-write"];
+
+		// Add directories for attached files outside vault
+		if (additionalDirs && additionalDirs.length > 0) {
+			for (const dir of additionalDirs) {
+				args.push("--add-dir", dir);
+			}
+		}
 
 		if (model) {
 			args.push("--model", model);

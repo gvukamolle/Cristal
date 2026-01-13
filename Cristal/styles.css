@@ -1849,6 +1849,66 @@
 	cursor: pointer;
 }
 
+/* Message context indicator (active file) */
+.cristal-message-context {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	margin-top: 8px;
+	padding: 4px 8px;
+	background: var(--background-modifier-border);
+	border-radius: 4px;
+	border-left: 2px solid var(--text-accent);
+	font-size: 11px;
+	color: var(--text-accent);
+}
+
+.cristal-message-context .cristal-context-icon {
+	display: flex;
+	align-items: center;
+	width: 12px;
+	height: 12px;
+}
+
+.cristal-message-context .cristal-context-label {
+	font-weight: 500;
+}
+
+/* Message attachments container */
+.cristal-message-attachments {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	margin-top: 8px;
+}
+
+/* Individual attachment chip */
+.cristal-attachment-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 4px 8px;
+	background: var(--background-secondary);
+	border-radius: 4px;
+	font-size: 11px;
+	color: var(--text-muted);
+}
+
+.cristal-attachment-chip .cristal-attachment-icon {
+	display: flex;
+	align-items: center;
+	width: 12px;
+	height: 12px;
+	color: var(--text-muted);
+}
+
+.cristal-attachment-chip .cristal-attachment-name {
+	max-width: 150px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
 /* ============================================================================
    Usage Section (Settings)
    ============================================================================ */
@@ -2701,3 +2761,166 @@
 	color: var(--text-muted);
 }
 
+
+/* No agents screen */
+.cristal-no-agents {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: 60px 20px;
+	text-align: center;
+	min-height: 300px;
+}
+
+.cristal-no-agents-icon {
+	width: 64px;
+	height: 64px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	margin-bottom: 20px;
+	opacity: 0.5;
+}
+
+.cristal-no-agents-icon svg {
+	width: 48px;
+	height: 48px;
+}
+
+.cristal-no-agents-title {
+	margin: 0 0 12px 0;
+	font-size: 20px;
+	font-weight: 600;
+	color: var(--text-normal);
+}
+
+.cristal-no-agents-subtitle {
+	margin: 0 0 24px 0;
+	font-size: 14px;
+	color: var(--text-muted);
+	max-width: 300px;
+}
+
+.cristal-no-agents-button {
+	padding: 10px 24px;
+	font-size: 14px;
+	border-radius: 6px;
+}
+
+/* Provider locked state */
+.cristal-provider-locked {
+	opacity: 0.5;
+	cursor: not-allowed !important;
+}
+
+.cristal-provider-locked:hover {
+	background: transparent !important;
+}
+
+/* Generic disabled button state (for no-agents / unavailable agent) */
+.cristal-btn-disabled {
+	opacity: 0.4;
+	cursor: not-allowed !important;
+	pointer-events: none;
+}
+
+.cristal-btn-disabled:hover {
+	background: transparent !important;
+}
+
+/* Danger zone in settings */
+.cristal-danger-zone-title {
+	color: var(--color-red);
+	margin-top: 30px;
+	padding-top: 20px;
+	border-top: 1px solid var(--background-modifier-border);
+}
+
+/* Confirm delete modal */
+.cristal-confirm-delete-modal {
+	padding: 20px;
+}
+
+.cristal-confirm-delete-modal h2 {
+	margin: 0 0 12px 0;
+	color: var(--color-red);
+}
+
+.cristal-confirm-delete-modal p {
+	margin: 0 0 20px 0;
+	color: var(--text-muted);
+}
+
+.cristal-confirm-buttons {
+	display: flex;
+	gap: 10px;
+	justify-content: flex-end;
+}
+
+.cristal-confirm-buttons button {
+	padding: 8px 16px;
+	border-radius: 4px;
+}
+
+/* Unavailable agent banner */
+.cristal-unavailable-agent-banner {
+	display: flex;
+	align-items: flex-start;
+	gap: 12px;
+	padding: 16px;
+	margin: 12px;
+	background: var(--background-modifier-error);
+	border: 1px solid var(--color-red);
+	border-radius: 8px;
+}
+
+.cristal-unavailable-agent-icon {
+	flex-shrink: 0;
+	color: var(--color-red);
+}
+
+.cristal-unavailable-agent-icon svg {
+	width: 24px;
+	height: 24px;
+}
+
+.cristal-unavailable-agent-text {
+	flex: 1;
+}
+
+.cristal-unavailable-agent-text strong {
+	display: block;
+	margin-bottom: 4px;
+	color: var(--color-red);
+	font-size: 14px;
+}
+
+.cristal-unavailable-agent-text p {
+	margin: 0;
+	font-size: 13px;
+	color: var(--text-muted);
+	line-height: 1.4;
+}
+
+/* Session agent icon */
+.cristal-session-agent-icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	opacity: 0.7;
+}
+
+.cristal-session-agent-icon svg {
+	width: 14px;
+	height: 14px;
+}
+
+.cristal-session-item .cristal-session-agent-icon {
+	margin-right: 6px;
+}
+
+.cristal-session-trigger .cristal-session-agent-icon {
+	margin-right: 6px;
+}

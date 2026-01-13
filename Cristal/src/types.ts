@@ -98,6 +98,8 @@ export interface ChatMessage {
 	isError?: boolean;
 	thinkingSteps?: ToolUseBlock[];  // Tool steps performed for this message
 	selectionContext?: SelectionContext;  // Selection context for this response (for replace/append)
+	attachedFiles?: { name: string; path: string; type: string }[];  // Files attached to this message
+	activeFileContext?: { name: string };  // Active file context included in this message
 }
 
 export interface ChatSession {
@@ -191,6 +193,7 @@ export interface AgentConfig {
 	enabled: boolean;                // Whether agent is enabled
 	cliPath: string;                 // Path to CLI executable
 	model: string;                   // Default model
+	disabledModels?: string[];       // Models disabled by user (hidden from dropdown)
 	// Claude-specific
 	thinkingEnabled?: boolean;       // Extended thinking mode
 	permissions?: ClaudePermissions; // Claude permissions
@@ -231,33 +234,12 @@ export interface CristalSettings {
 	thinkingEnabled?: boolean;
 }
 
-export const DEFAULT_AGENTS: AgentConfig[] = [
-	{
-		id: "claude-default",
-		cliType: "claude",
-		name: "Claude",
-		description: "Anthropic Claude Code CLI",
-		enabled: true,
-		cliPath: "claude",
-		model: "claude-haiku-4-5-20251001",
-		thinkingEnabled: false,
-		permissions: { webSearch: false, webFetch: false, task: false }
-	},
-	{
-		id: "codex-default",
-		cliType: "codex",
-		name: "Codex",
-		description: "OpenAI Codex CLI",
-		enabled: false,
-		cliPath: "codex",
-		model: "gpt-5.2-codex",
-		reasoningEnabled: false
-	}
-];
+// Empty by default - user must add agents in settings
+export const DEFAULT_AGENTS: AgentConfig[] = [];
 
 export const DEFAULT_SETTINGS: CristalSettings = {
 	agents: DEFAULT_AGENTS,
-	defaultAgentId: "claude-default",
+	defaultAgentId: null,
 	language: "en",
 	customCommands: [],
 	disabledBuiltinCommands: [],

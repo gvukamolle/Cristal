@@ -1,10 +1,12 @@
-import { ItemView, WorkspaceLeaf, MarkdownRenderer, setIcon, TFile, Modal, TextComponent } from "obsidian";
+import { ItemView, WorkspaceLeaf, MarkdownRenderer, setIcon, TFile, Modal, TextComponent, FileSystemAdapter } from "obsidian";
 import type CristalPlugin from "./main";
 import type { ChatMessage, SlashCommand, StreamingEvent, CompleteEvent, ResultEvent, ErrorEvent, AssistantEvent, ClaudeModel, SessionTokenStats, ContextUsage, CompactEvent, ResultMessage, ToolUseEvent, ToolUseBlock, SelectionContext, AIProvider } from "./types";
 import { CLAUDE_MODELS, CODEX_MODELS } from "./types";
 import { getAvailableCommands, filterCommands, parseCommand, buildCommandPrompt } from "./commands";
 import { getButtonLocale, type ButtonLocale } from "./buttonLocales";
 import { setCodexReasoningLevel } from "./codexConfig";
+import * as fs from "fs";
+import * as path from "path";
 
 export const CRISTAL_VIEW_TYPE = "cristal-cli-llm-chat-view";
 
@@ -26,6 +28,8 @@ export class CristalChatView extends ItemView {
 	private currentProvider: AIProvider;
 	private providerIndicatorEl: HTMLElement;
 	private sessionStarted: boolean = false;  // Track if first message was sent
+	private agentUnavailable: boolean = false;  // Track if session's agent is unavailable
+	private noAgentsConfigured: boolean = false;  // Track if no agents are configured/enabled
 	private modelAutocompleteVisible: boolean = false;
 	private thinkingEnabled: boolean = false;  // Extended thinking mode for Claude
 	private codexReasoningEnabled: boolean = false;  // Deep reasoning for Codex (medium/xhigh)
@@ -46,7 +50,7 @@ export class CristalChatView extends ItemView {
 
 	// @ mentions
 	private mentionedFiles: TFile[] = [];
-	private attachedFiles: { name: string; content: string; type: string }[] = [];
+	private attachedFiles: { name: string; path: string; type: string }[] = [];
 	private selectedText: SelectionContext | null = null;
 	private lastSelectionContext: SelectionContext | null = null;  // Preserved for response buttons
 	private mentionAutocompleteEl: HTMLElement | null = null;
@@ -60,14 +64,27 @@ export class CristalChatView extends ItemView {
 	private contextIndicatorBtnEl: HTMLElement;
 	private contextRingEl: SVGSVGElement;
 	private contextPercentEl: HTMLElement;
+	private contextUpdateVersion: number = 0;  // Race condition protection
 	private contextPopupEl: HTMLElement;
 	private contextPopupInfoEl: HTMLElement;
 	private isContextPopupOpen: boolean = false;
 
 	// Context tracking (per session)
-	private static readonly CONTEXT_LIMIT = 80000;  // Fixed limit for 100%
-	private static readonly AUTO_COMPACT_THRESHOLD = 0.85;  // 85% triggers auto-compact
+	// Dynamic limits based on provider:
+	// - Claude: 200k context, 180k effective limit (90%)
+	// - Codex: 272k input context, 245k effective limit (90%)
+	private static readonly AUTO_COMPACT_THRESHOLD = 0.90;  // 90% triggers auto-compact
 	private tokenStats: SessionTokenStats = this.initialTokenStats();
+
+	private getContextLimit(): number {
+		// Claude: 200k * 90% = 180k
+		// Codex: 272k * 90% = 245k
+		return this.currentProvider === "codex" ? 245000 : 180000;
+	}
+
+	private getNominalContextWindow(): number {
+		return this.currentProvider === "codex" ? 272000 : 200000;
+	}
 	private pendingAutoCompact: boolean = false;
 
 	// Compact feature
@@ -107,14 +124,14 @@ export class CristalChatView extends ItemView {
 	}
 
 	private calculateContextUsage(stats: SessionTokenStats): ContextUsage {
-		const effectiveLimit = CristalChatView.CONTEXT_LIMIT;
+		const effectiveLimit = this.getContextLimit();
 		const usedTokens = stats.inputTokens + stats.outputTokens;
 		const percentage = Math.min((usedTokens / effectiveLimit) * 100, 100);
 
 		return {
 			used: usedTokens,
 			limit: effectiveLimit,
-			nominal: stats.contextWindow,
+			nominal: this.getNominalContextWindow(),
 			percentage: Math.round(percentage)
 		};
 	}
@@ -508,6 +525,9 @@ export class CristalChatView extends ItemView {
 				this.setInputEnabled(true);
 				this.resetToolGrouping();  // Reset grouping state for next response
 
+				// Cleanup temporary files after response is complete
+				this.cleanupTempFiles();
+
 				// Execute pending auto-compact after response is complete (Claude only)
 				if (this.pendingAutoCompact && this.currentProvider === "claude") {
 					this.pendingAutoCompact = false;
@@ -549,12 +569,10 @@ export class CristalChatView extends ItemView {
 					this.tokenStats = session.tokenStats;
 					this.updateTokenIndicator();
 
-					// Check if we need to trigger auto-compact (Claude only)
-					if (this.currentProvider === "claude") {
-						const usage = this.calculateContextUsage(this.tokenStats);
-						if (usage.percentage >= CristalChatView.AUTO_COMPACT_THRESHOLD * 100 && !this.pendingAutoCompact) {
-							this.pendingAutoCompact = true;
-						}
+					// Check if we need to trigger auto-compact (both providers)
+					const usage = this.calculateContextUsage(this.tokenStats);
+					if (usage.percentage >= CristalChatView.AUTO_COMPACT_THRESHOLD * 100 && !this.pendingAutoCompact) {
+						this.pendingAutoCompact = true;
 					}
 				}
 			}
@@ -704,6 +722,11 @@ export class CristalChatView extends ItemView {
 	// Provider indicator methods
 	private updateProviderIndicator(): void {
 		this.providerIndicatorEl.empty();
+
+		// Check if switching is possible
+		const canSwitch = this.getEnabledAgentsCount() > 1 && !this.sessionStarted;
+		this.providerIndicatorEl.toggleClass("cristal-provider-locked", !canSwitch);
+
 		const icon = this.providerIndicatorEl.createSpan({ cls: "cristal-provider-indicator-icon" });
 		setIcon(icon, this.currentProvider === "claude" ? "sparkles" : "bot");
 		this.providerIndicatorEl.createSpan({
@@ -716,15 +739,22 @@ export class CristalChatView extends ItemView {
 		// Can't switch provider after session started
 		if (this.sessionStarted) return;
 
-		this.currentProvider = this.currentProvider === "claude" ? "codex" : "claude";
-		this.updateProviderIndicator();
+		// Can't switch if only one agent is enabled
+		const enabledAgents = this.plugin.settings.agents.filter(a => a.enabled);
+		if (enabledAgents.length <= 1) return;
 
-		// Update model to default for new provider (get from agent)
-		const agent = this.plugin.getAgentByCliType(this.currentProvider);
-		this.currentModel = agent?.model || (this.currentProvider === "claude" ? "claude-haiku-4-5-20251001" : "gpt-5.2-codex");
-		// Update thinking/reasoning state from agent
-		this.thinkingEnabled = agent?.thinkingEnabled || false;
-		this.codexReasoningEnabled = agent?.reasoningEnabled || false;
+		// Find next enabled agent
+		const currentIndex = enabledAgents.findIndex(a => a.cliType === this.currentProvider);
+		const nextIndex = (currentIndex + 1) % enabledAgents.length;
+		const nextAgent = enabledAgents[nextIndex];
+		if (!nextAgent) return;
+
+		this.currentProvider = nextAgent.cliType as AIProvider;
+		this.currentModel = nextAgent.model;
+		this.thinkingEnabled = nextAgent.thinkingEnabled || false;
+		this.codexReasoningEnabled = nextAgent.reasoningEnabled || false;
+
+		this.updateProviderIndicator();
 		this.updateModelIndicatorState();
 
 		// Update placeholder text
@@ -783,8 +813,13 @@ export class CristalChatView extends ItemView {
 			"gpt-5.2": { icon: "cpu", desc: "Knowledge, reasoning, coding" }
 		};
 
-		// Select models based on current provider
-		const models = this.currentProvider === "claude" ? CLAUDE_MODELS : CODEX_MODELS;
+		// Select models based on current provider, filtering out disabled ones
+		const allModels = this.currentProvider === "claude" ? CLAUDE_MODELS : CODEX_MODELS;
+		const currentAgent = this.plugin.settings.agents.find(
+			a => a.cliType === this.currentProvider && a.enabled
+		);
+		const disabledModels = currentAgent?.disabledModels || [];
+		const models = allModels.filter(m => !disabledModels.includes(m.value));
 
 		for (const model of models) {
 			const itemEl = this.autocompleteEl.createDiv({
@@ -1080,10 +1115,18 @@ export class CristalChatView extends ItemView {
 			});
 		}
 
+		// Provider info
+		const providerName = this.currentProvider === "codex" ? "Codex" : "Claude";
+		const contextWindow = this.currentProvider === "codex" ? "272k" : "200k";
+		this.contextPopupInfoEl.createDiv({
+			cls: "cristal-context-row cristal-context-row-info",
+			text: `Provider: ${providerName} (${contextWindow})`
+		});
+
 		// Info about context limit and auto-compact
 		this.contextPopupInfoEl.createDiv({
 			cls: "cristal-context-row cristal-context-row-info",
-			text: `${locale.contextLimit || "Limit"}: ${this.formatTokens(CristalChatView.CONTEXT_LIMIT)}`
+			text: `${locale.contextLimit || "Limit"}: ${this.formatTokens(this.getContextLimit())}`
 		});
 		this.contextPopupInfoEl.createDiv({
 			cls: "cristal-context-row cristal-context-row-info",
@@ -1263,21 +1306,44 @@ Provide only the summary, no additional commentary.`;
 		this.messages = [...session.messages];
 		this.messagesContainer.empty();
 
+		// Reset agent state flags
+		this.agentUnavailable = false;
+		this.noAgentsConfigured = false;
+
 		// Load token stats from session (or reset if not available)
 		this.tokenStats = session.tokenStats || this.initialTokenStats();
 		// Initialize lastRecordedTokens to avoid double-counting on session reload
 		this.lastRecordedTokens = this.tokenStats.inputTokens + this.tokenStats.outputTokens;
 		this.updateTokenIndicator();
 
-		if (this.messages.length === 0) {
-			this.showWelcome();
-		} else {
-			// Render existing messages
+		// Check if any agents are configured and enabled
+		if (!this.hasEnabledAgents()) {
+			this.showNoAgentsScreen();
+		} else if (!this.isSessionAgentAvailable(session)) {
+			// Session's agent was deleted or disabled
+			this.showUnavailableAgentScreen();
+			// Still render existing messages for reference
 			for (const msg of this.messages) {
 				if (msg.role === "user") {
-					this.renderUserMessage(msg.content, msg.id);
+					this.renderUserMessage(msg.content, msg.id, msg.attachedFiles, msg.activeFileContext);
 				} else {
 					this.renderAssistantMessage(msg.content, msg.id, msg.thinkingSteps, msg.selectionContext);
+				}
+			}
+		} else {
+			// Agent is available - ensure UI is enabled
+			this.enableInputControls();
+
+			if (this.messages.length === 0) {
+				this.showWelcome();
+			} else {
+				// Render existing messages
+				for (const msg of this.messages) {
+					if (msg.role === "user") {
+						this.renderUserMessage(msg.content, msg.id, msg.attachedFiles, msg.activeFileContext);
+					} else {
+						this.renderAssistantMessage(msg.content, msg.id, msg.thinkingSteps, msg.selectionContext);
+					}
 				}
 			}
 		}
@@ -1296,13 +1362,47 @@ Provide only the summary, no additional commentary.`;
 		this.setStatus("idle");
 	}
 
-	private renderUserMessage(content: string, id: string): void {
+	private renderUserMessage(
+		content: string,
+		id: string,
+		attachedFiles?: { name: string; path: string; type: string }[],
+		activeFileContext?: { name: string }
+	): void {
 		const msgEl = this.messagesContainer.createDiv({
 			cls: "cristal-message cristal-message-user"
 		});
 		msgEl.dataset.id = id;
+
 		const contentEl = msgEl.createDiv({ cls: "cristal-message-content" });
 		contentEl.setText(content);
+
+		// Show active file context if included
+		if (activeFileContext) {
+			const contextEl = msgEl.createDiv({ cls: "cristal-message-context" });
+			const icon = contextEl.createSpan({ cls: "cristal-context-icon" });
+			setIcon(icon, "file-text");
+			contextEl.createSpan({
+				cls: "cristal-context-label",
+				text: `Context: ${activeFileContext.name}`
+			});
+		}
+
+		// Show attached files
+		if (attachedFiles && attachedFiles.length > 0) {
+			const attachmentsEl = msgEl.createDiv({ cls: "cristal-message-attachments" });
+			for (const file of attachedFiles) {
+				const fileChip = attachmentsEl.createDiv({ cls: "cristal-attachment-chip" });
+				// Icon based on file type
+				const iconName = this.getFileIcon(file.type);
+				const icon = fileChip.createSpan({ cls: "cristal-attachment-icon" });
+				setIcon(icon, iconName);
+				// File name
+				fileChip.createSpan({
+					cls: "cristal-attachment-name",
+					text: file.name
+				});
+			}
+		}
 	}
 
 	private renderAssistantMessage(content: string, id: string, thinkingSteps?: ToolUseBlock[], selectionContext?: SelectionContext): void {
@@ -1591,6 +1691,15 @@ Provide only the summary, no additional commentary.`;
 			setIcon(spinnerEl, "loader-2");
 		}
 
+		// Show agent icon in trigger
+		if (currentSession) {
+			const agentIcon = this.getAgentIcon(currentSession);
+			if (agentIcon) {
+				const iconEl = this.sessionTriggerEl.createSpan({ cls: "cristal-session-agent-icon" });
+				setIcon(iconEl, agentIcon);
+			}
+		}
+
 		const triggerText = this.sessionTriggerEl.createSpan({ cls: "cristal-session-trigger-text" });
 		triggerText.setText(currentSession ? this.getSessionLabel(currentSession) : "Select chat");
 		const triggerIcon = this.sessionTriggerEl.createSpan({ cls: "cristal-session-trigger-icon" });
@@ -1611,6 +1720,13 @@ Provide only the summary, no additional commentary.`;
 			if (isRunning) {
 				const spinnerEl = item.createSpan({ cls: "cristal-session-spinner" });
 				setIcon(spinnerEl, "loader-2");
+			}
+
+			// Show agent icon
+			const agentIcon = this.getAgentIcon(session);
+			if (agentIcon) {
+				const iconEl = item.createSpan({ cls: "cristal-session-agent-icon" });
+				setIcon(iconEl, agentIcon);
 			}
 
 			const titleEl = item.createSpan({ cls: "cristal-session-title" });
@@ -1642,6 +1758,24 @@ Provide only the summary, no additional commentary.`;
 		}
 		const date = new Date(session.createdAt);
 		return `New chat - ${date.toLocaleDateString()} ${date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
+	}
+
+	/**
+	 * Get icon name for session's agent
+	 */
+	private getAgentIcon(session: import("./types").ChatSession): string | null {
+		// Try to get agent from agentId
+		if (session.agentId) {
+			const agent = this.plugin.settings.agents.find(a => a.id === session.agentId);
+			if (agent) {
+				return agent.cliType === "claude" ? "sparkles" : "code";
+			}
+		}
+		// Fallback to provider field (legacy)
+		if (session.provider) {
+			return session.provider === "claude" ? "sparkles" : "code";
+		}
+		return null;
 	}
 
 	private toggleSessionDropdown(): void {
@@ -1708,9 +1842,36 @@ Provide only the summary, no additional commentary.`;
 		this.updateSessionDropdown();
 	}
 
-	private updateFileContextIndicator(): void {
+	private async updateFileContextIndicator(): Promise<void> {
+		// Race condition protection: increment version and capture it
+		const currentVersion = ++this.contextUpdateVersion;
+
 		this.contextIndicatorEl.empty();
 		let hasContent = false;
+
+		// Get active file for duplicate checking
+		const activeFile = this.app.workspace.getActiveFile();
+		const activeFileBasename = activeFile?.basename || "";
+
+		// Track shown basenames to avoid duplicates
+		const shownBasenames = new Set<string>();
+
+		// 0. Active file context (unless disabled, icon: file-text)
+		// This is the ONLY automatic context - one file only
+		if (!this.contextDisabled && activeFile && activeFile.extension === "md") {
+			const fileContext = await this.getActiveFileContext();
+			// Check if this update is still current (race condition protection)
+			if (currentVersion !== this.contextUpdateVersion) return;
+
+			if (fileContext) {
+				this.addContextChip("file-text", fileContext.name, () => {
+					this.contextDisabled = true;
+					this.updateFileContextIndicator();
+				});
+				shownBasenames.add(activeFileBasename);
+				hasContent = true;
+			}
+		}
 
 		// 1. Selected text from editor (highest priority, icon: text-cursor)
 		if (this.selectedText) {
@@ -1725,11 +1886,16 @@ Provide only the summary, no additional commentary.`;
 		}
 
 		// 2. Mentioned pages via @ (icon: at-sign)
+		// Skip if basename already shown (avoid visual duplicates)
 		for (const mention of this.mentionedFiles) {
+			// Skip if this basename was already shown (e.g., as active file context)
+			if (shownBasenames.has(mention.basename)) continue;
+
 			this.addContextChip("at-sign", mention.basename, () => {
 				this.mentionedFiles = this.mentionedFiles.filter(f => f.path !== mention.path);
 				this.updateFileContextIndicator();
 			});
+			shownBasenames.add(mention.basename);
 			hasContent = true;
 		}
 
@@ -1887,6 +2053,139 @@ Provide only the summary, no additional commentary.`;
 		return instructions[lang] ?? instructions["en"] ?? "Work only with the selected text fragment. Return only the result.";
 	}
 
+	// Check if any agents are enabled
+	private hasEnabledAgents(): boolean {
+		return this.plugin.settings.agents.some(a => a.enabled);
+	}
+
+	// Count enabled agents
+	private getEnabledAgentsCount(): number {
+		return this.plugin.settings.agents.filter(a => a.enabled).length;
+	}
+
+	// Show "No agents configured" screen
+	private showNoAgentsScreen(): void {
+		const locale = getButtonLocale(this.plugin.settings.language);
+		this.messagesContainer.empty();
+
+		const noAgents = this.messagesContainer.createDiv({ cls: "cristal-no-agents" });
+
+		// Icon
+		const iconEl = noAgents.createDiv({ cls: "cristal-no-agents-icon" });
+		setIcon(iconEl, "bot");
+
+		// Title
+		noAgents.createEl("h2", {
+			cls: "cristal-no-agents-title",
+			text: locale.noAgentsTitle
+		});
+
+		// Subtitle
+		noAgents.createEl("p", {
+			cls: "cristal-no-agents-subtitle",
+			text: locale.noAgentsSubtitle
+		});
+
+		// Open Settings button
+		const btn = noAgents.createEl("button", {
+			cls: "cristal-no-agents-button mod-cta",
+			text: locale.openSettings
+		});
+		btn.addEventListener("click", () => {
+			// Open plugin settings
+			(this.app as any).setting.open();
+			(this.app as any).setting.openTabById("cristal");
+		});
+
+		// Set flag and disable all input controls
+		this.noAgentsConfigured = true;
+		this.disableInputControls(locale.noAgentsPlaceholder);
+	}
+
+	/**
+	 * Show warning banner when session's agent is unavailable (deleted/disabled)
+	 * Messages will be rendered after this banner
+	 */
+	private showUnavailableAgentScreen(): void {
+		const locale = getButtonLocale(this.plugin.settings.language);
+
+		// Create warning banner at the top (not replacing messages)
+		const banner = this.messagesContainer.createDiv({ cls: "cristal-unavailable-agent-banner" });
+
+		// Icon
+		const iconEl = banner.createDiv({ cls: "cristal-unavailable-agent-icon" });
+		setIcon(iconEl, "alert-triangle");
+
+		// Text content
+		const textEl = banner.createDiv({ cls: "cristal-unavailable-agent-text" });
+		textEl.createEl("strong", { text: locale.unavailableAgentTitle });
+		textEl.createEl("p", { text: locale.unavailableAgentSubtitle });
+
+		// Set flag and disable all input controls
+		this.agentUnavailable = true;
+		this.disableInputControls(locale.unavailableAgentPlaceholder);
+	}
+
+	/**
+	 * Disable all input controls when agent is unavailable
+	 * Keeps session switching and new chat buttons active
+	 */
+	private disableInputControls(placeholder: string): void {
+		// Disable input field
+		this.inputEl.disabled = true;
+		this.inputEl.placeholder = placeholder;
+
+		// Disable send button
+		this.sendButton.disabled = true;
+		this.sendButton.addClass("cristal-btn-disabled");
+
+		// Disable provider indicator
+		this.providerIndicatorEl.addClass("cristal-btn-disabled");
+
+		// Disable model indicator
+		this.modelIndicatorEl.addClass("cristal-btn-disabled");
+
+		// Disable context indicator
+		this.contextIndicatorBtnEl.addClass("cristal-btn-disabled");
+	}
+
+	/**
+	 * Re-enable all input controls when agent becomes available
+	 */
+	private enableInputControls(): void {
+		const locale = getButtonLocale(this.plugin.settings.language);
+
+		// Enable input field
+		this.inputEl.disabled = false;
+		this.inputEl.placeholder = locale.inputPlaceholder;
+
+		// Enable send button
+		this.sendButton.disabled = false;
+		this.sendButton.removeClass("cristal-btn-disabled");
+
+		// Enable provider indicator
+		this.providerIndicatorEl.removeClass("cristal-btn-disabled");
+
+		// Enable model indicator
+		this.modelIndicatorEl.removeClass("cristal-btn-disabled");
+
+		// Enable context indicator
+		this.contextIndicatorBtnEl.removeClass("cristal-btn-disabled");
+	}
+
+	/**
+	 * Check if session's agent is available (exists and enabled)
+	 */
+	private isSessionAgentAvailable(session: import("./types").ChatSession): boolean {
+		// New sessions without agentId - check if any agent is available
+		if (!session.agentId) {
+			return this.hasEnabledAgents();
+		}
+		// Check if specific agent exists and is enabled
+		const agent = this.plugin.settings.agents.find(a => a.id === session.agentId);
+		return agent !== undefined && agent.enabled;
+	}
+
 	private showWelcome(): void {
 		if (this.messages.length === 0) {
 			const locale = getButtonLocale(this.plugin.settings.language);
@@ -1956,6 +2255,11 @@ Provide only the summary, no additional commentary.`;
 		if (userInput.startsWith("/")) {
 			const commandPrompt = this.processSlashCommand(userInput);
 			if (commandPrompt) {
+				// Handle special /compact command
+				if (commandPrompt === "__COMPACT__") {
+					await this.runCompact();
+					return;
+				}
 				userPrompt = commandPrompt;
 				expandedPrompt = commandPrompt;
 				// Show the original command in chat
@@ -1966,42 +2270,59 @@ Provide only the summary, no additional commentary.`;
 		// Check if this is the first message in session (for system prompt)
 		const isFirstMessage = this.messages.length === 0;
 
-		this.addUserMessage(displayText, expandedPrompt);
+		// Collect metadata before adding user message
+		const attachedFilesMetadata = [...this.attachedFiles];
+		let activeFileContextMetadata: { name: string } | undefined;
+
+		// Get active file for checking
+		const activeFile = this.app.workspace.getActiveFile();
+		const activeFileBasename = activeFile?.basename || "";
+
+		// Check if active file context will be included
+		// Active file is THE primary context source (one file only rule)
+		if (!this.contextDisabled && activeFile && activeFile.extension === "md") {
+			const fileContext = await this.getActiveFileContext();
+			if (fileContext) {
+				activeFileContextMetadata = { name: fileContext.name };
+			}
+		}
+
+		this.addUserMessage(displayText, expandedPrompt, attachedFilesMetadata, activeFileContextMetadata);
 		this.setInputEnabled(false);
 		this.setStatus("loading");
 
 		// Prepare assistant message element
 		this.prepareAssistantMessage();
 
-		// Build prompt with file context (unless disabled by user)
+		// Build prompt with file context (active file is THE context source)
 		let fullPrompt = userPrompt;
-		if (!this.contextDisabled) {
+		if (!this.contextDisabled && activeFile && activeFile.extension === "md") {
 			const fileContext = await this.getActiveFileContext();
 			if (fileContext) {
 				fullPrompt = `[Context: ${fileContext.name}]\n${fileContext.content}\n\n---\n\n${userPrompt}`;
 			}
 		}
 
-		// Add mentioned files context
+		// Add mentioned files context (excluding active file to avoid duplicates)
 		if (this.mentionedFiles.length > 0) {
-			const mentionedContext = await this.getMentionedFilesContext();
-			if (mentionedContext) {
-				fullPrompt = `${mentionedContext}\n\n---\n\n${fullPrompt}`;
+			// Filter out files that match active file basename
+			const uniqueMentions = this.mentionedFiles.filter(f => f.basename !== activeFileBasename);
+			if (uniqueMentions.length > 0) {
+				const mentionedContext = await this.getMentionedFilesContextFiltered(uniqueMentions);
+				if (mentionedContext) {
+					fullPrompt = `${mentionedContext}\n\n---\n\n${fullPrompt}`;
+				}
 			}
 			// Clear mentioned files after sending
 			this.clearMentionedFiles();
 		}
 
-		// Add attached files context
+		// Add attached files using @ syntax
 		if (this.attachedFiles.length > 0) {
-			const attachedContext = this.attachedFiles.map(file => {
-				if (["png", "jpg", "jpeg", "gif", "webp"].includes(file.type)) {
-					return `[Attached image: ${file.name}]\n${file.content}`;
-				} else {
-					return `[Attached file: ${file.name}]\n${file.content}`;
-				}
-			}).join("\n\n---\n\n");
-			fullPrompt = `${attachedContext}\n\n---\n\n${fullPrompt}`;
+			const fileReferences = this.attachedFiles
+				.map(file => `@${file.path}`)
+				.join(" ");
+			fullPrompt = `${fileReferences}\n\n${fullPrompt}`;
 			this.clearAttachedFiles();
 		}
 
@@ -2066,13 +2387,20 @@ Provide only the summary, no additional commentary.`;
 		);
 	}
 
-	private addUserMessage(content: string, expandedPrompt?: string | null): void {
+	private addUserMessage(
+		content: string,
+		expandedPrompt?: string | null,
+		attachedFiles?: { name: string; path: string; type: string }[],
+		activeFileContext?: { name: string }
+	): void {
 		const msgId = crypto.randomUUID();
 		const message: ChatMessage = {
 			id: msgId,
 			role: "user",
 			content,
-			timestamp: Date.now()
+			timestamp: Date.now(),
+			attachedFiles,
+			activeFileContext
 		};
 		this.messages.push(message);
 
@@ -2088,6 +2416,34 @@ Provide only the summary, no additional commentary.`;
 		if (expandedPrompt && content.startsWith("/")) {
 			const expandedEl = msgEl.createDiv({ cls: "cristal-expanded-prompt" });
 			expandedEl.setText(expandedPrompt);
+		}
+
+		// Show active file context if included
+		if (activeFileContext) {
+			const contextEl = msgEl.createDiv({ cls: "cristal-message-context" });
+			const icon = contextEl.createSpan({ cls: "cristal-context-icon" });
+			setIcon(icon, "file-text");
+			contextEl.createSpan({
+				cls: "cristal-context-label",
+				text: `Context: ${activeFileContext.name}`
+			});
+		}
+
+		// Show attached files
+		if (attachedFiles && attachedFiles.length > 0) {
+			const attachmentsEl = msgEl.createDiv({ cls: "cristal-message-attachments" });
+			for (const file of attachedFiles) {
+				const fileChip = attachmentsEl.createDiv({ cls: "cristal-attachment-chip" });
+				// Icon based on file type
+				const iconName = this.getFileIcon(file.type);
+				const icon = fileChip.createSpan({ cls: "cristal-attachment-icon" });
+				setIcon(icon, iconName);
+				// File name
+				fileChip.createSpan({
+					cls: "cristal-attachment-name",
+					text: file.name
+				});
+			}
 		}
 
 		// Add copy and edit buttons
@@ -3601,9 +3957,13 @@ Provide only the summary, no additional commentary.`;
 	}
 
 	private async getMentionedFilesContext(): Promise<string> {
+		return this.getMentionedFilesContextFiltered(this.mentionedFiles);
+	}
+
+	private async getMentionedFilesContextFiltered(files: TFile[]): Promise<string> {
 		const contexts: string[] = [];
 
-		for (const file of this.mentionedFiles) {
+		for (const file of files) {
 			try {
 				const content = await this.app.vault.read(file);
 				contexts.push(`[File: ${file.basename}]\n${content}`);
@@ -3674,34 +4034,40 @@ Provide only the summary, no additional commentary.`;
 			}
 
 			const ext = file.name.split(".").pop()?.toLowerCase() || "";
-			const isImage = ["png", "jpg", "jpeg", "gif", "webp"].includes(ext);
-			const isText = ["md", "txt", "json", "yaml", "yml", "js", "ts", "tsx", "jsx", "py", "java", "cpp", "c", "h", "go", "rs", "rb", "php", "html", "css", "xml", "csv"].includes(ext);
-			const isBinary = ["pdf", "xlsx", "docx"].includes(ext);
 
-			let content = "";
+			// Create temp directory if it doesn't exist
+			// Get vault base path
+			const vaultPath = this.app.vault.adapter instanceof FileSystemAdapter
+				? this.app.vault.adapter.getBasePath()
+				: "";
 
-			if (isImage) {
-				const reader = new FileReader();
-				content = await new Promise<string>((resolve, reject) => {
-					reader.onload = () => resolve(reader.result as string);
-					reader.onerror = reject;
-					reader.readAsDataURL(file);
-				});
-			} else if (isText) {
-				const reader = new FileReader();
-				content = await new Promise<string>((resolve, reject) => {
-					reader.onload = () => resolve(reader.result as string);
-					reader.onerror = reject;
-					reader.readAsText(file);
-				});
-			} else if (isBinary) {
-				content = `[Binary file: ${file.name}]`;
-			} else {
-				this.addErrorMessage(`${locale.unsupportedFileType || "Unsupported file type"}: ${ext}`);
+			if (!vaultPath) {
+				this.addErrorMessage(`${locale.fileAttachError || "Failed to attach file"}: Cannot access vault path`);
 				return;
 			}
 
-			this.attachedFiles.push({ name: file.name, content, type: ext });
+			const tempDir = path.join(vaultPath, ".cristal-temp");
+			if (!fs.existsSync(tempDir)) {
+				fs.mkdirSync(tempDir, { recursive: true });
+			}
+
+			// Generate unique filename to avoid collisions
+			const timestamp = Date.now();
+			const uniqueFileName = `${timestamp}-${file.name}`;
+			const tempPath = path.join(tempDir, uniqueFileName);
+
+			// Save file to temp directory
+			const buffer = await file.arrayBuffer();
+			fs.writeFileSync(tempPath, Buffer.from(buffer));
+
+			// Calculate relative path from vault working directory
+			const relativePath = path.relative(vaultPath, tempPath);
+
+			this.attachedFiles.push({
+				name: file.name,
+				path: relativePath,
+				type: ext
+			});
 			this.updateFileContextIndicator();
 
 		} catch (err) {
@@ -3735,6 +4101,22 @@ Provide only the summary, no additional commentary.`;
 	private clearAttachedFiles(): void {
 		this.attachedFiles = [];
 		this.updateFileContextIndicator();
+	}
+
+	private cleanupTempFiles(): void {
+		try {
+			const vaultPath = this.app.vault.adapter instanceof FileSystemAdapter
+				? this.app.vault.adapter.getBasePath()
+				: "";
+			if (!vaultPath) return;
+
+			const tempDir = path.join(vaultPath, ".cristal-temp");
+			if (fs.existsSync(tempDir)) {
+				fs.rmSync(tempDir, { recursive: true, force: true });
+			}
+		} catch (err) {
+			console.error("Failed to cleanup temp files:", err);
+		}
 	}
 
 	// ============================================================================

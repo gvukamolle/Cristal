@@ -135,6 +135,17 @@ export interface SettingsLocale {
 	notAuthenticatedDesc: string;
 	limitsError: string;
 	loginToCli: string;
+
+	// Delete integration
+	dangerZone: string;
+	deleteIntegration: string;
+	deleteIntegrationDesc: string;
+	confirmDeleteTitle: string;
+	confirmDeleteMessage: string;
+
+	// Model management
+	availableModels: string;
+	availableModelsDesc: string;
 }
 
 export const SETTINGS_LOCALES: Record<LanguageCode, SettingsLocale> = {
@@ -272,7 +283,16 @@ export const SETTINGS_LOCALES: Record<LanguageCode, SettingsLocale> = {
 		notAuthenticated: "Не авторизован",
 		notAuthenticatedDesc: "Войдите в CLI для просмотра лимитов",
 		limitsError: "Ошибка получения лимитов",
-		loginToCli: "Войти в CLI"
+		loginToCli: "Войти в CLI",
+		dangerZone: "Опасная зона",
+		deleteIntegration: "Удалить эту интеграцию",
+		deleteIntegrationDesc: "Это удалит агента из настроек. Действие нельзя отменить.",
+		confirmDeleteTitle: "Удалить интеграцию?",
+		confirmDeleteMessage: "Вы уверены, что хотите удалить",
+
+		// Model management
+		availableModels: "Доступные модели",
+		availableModelsDesc: "Отключите модели, которые не хотите использовать"
 	},
 
 	en: {
@@ -409,7 +429,16 @@ export const SETTINGS_LOCALES: Record<LanguageCode, SettingsLocale> = {
 		notAuthenticated: "Not authenticated",
 		notAuthenticatedDesc: "Log in to CLI to view limits",
 		limitsError: "Failed to fetch limits",
-		loginToCli: "Log in to CLI"
+		loginToCli: "Log in to CLI",
+		dangerZone: "Danger Zone",
+		deleteIntegration: "Delete this integration",
+		deleteIntegrationDesc: "This will remove the agent from your settings. This action cannot be undone.",
+		confirmDeleteTitle: "Delete Integration?",
+		confirmDeleteMessage: "Are you sure you want to delete",
+
+		// Model management
+		availableModels: "Available Models",
+		availableModelsDesc: "Disable models you don't want to use"
 	},
 
 	fr: {
@@ -546,7 +575,16 @@ export const SETTINGS_LOCALES: Record<LanguageCode, SettingsLocale> = {
 		notAuthenticated: "Non authentifié",
 		notAuthenticatedDesc: "Connectez-vous au CLI pour voir les limites",
 		limitsError: "Échec de récupération des limites",
-		loginToCli: "Se connecter au CLI"
+		loginToCli: "Se connecter au CLI",
+		dangerZone: "Zone dangereuse",
+		deleteIntegration: "Supprimer cette intégration",
+		deleteIntegrationDesc: "Cela supprimera l'agent de vos paramètres. Cette action est irréversible.",
+		confirmDeleteTitle: "Supprimer l'intégration ?",
+		confirmDeleteMessage: "Êtes-vous sûr de vouloir supprimer",
+
+		// Model management
+		availableModels: "Modèles disponibles",
+		availableModelsDesc: "Désactivez les modèles que vous ne souhaitez pas utiliser"
 	},
 
 	de: {
@@ -683,7 +721,16 @@ export const SETTINGS_LOCALES: Record<LanguageCode, SettingsLocale> = {
 		notAuthenticated: "Nicht authentifiziert",
 		notAuthenticatedDesc: "Melden Sie sich beim CLI an, um Limits anzuzeigen",
 		limitsError: "Limits konnten nicht abgerufen werden",
-		loginToCli: "Beim CLI anmelden"
+		loginToCli: "Beim CLI anmelden",
+		dangerZone: "Gefahrenzone",
+		deleteIntegration: "Diese Integration löschen",
+		deleteIntegrationDesc: "Dies entfernt den Agenten aus Ihren Einstellungen. Diese Aktion kann nicht rückgängig gemacht werden.",
+		confirmDeleteTitle: "Integration löschen?",
+		confirmDeleteMessage: "Sind Sie sicher, dass Sie löschen möchten",
+
+		// Model management
+		availableModels: "Verfügbare Modelle",
+		availableModelsDesc: "Deaktivieren Sie Modelle, die Sie nicht verwenden möchten"
 	},
 
 	es: {
@@ -820,7 +867,18 @@ export const SETTINGS_LOCALES: Record<LanguageCode, SettingsLocale> = {
 		notAuthenticated: "No autenticado",
 		notAuthenticatedDesc: "Inicia sesión en CLI para ver los límites",
 		limitsError: "Error al obtener límites",
-		loginToCli: "Iniciar sesión en CLI"
+		loginToCli: "Iniciar sesión en CLI",
+
+		// Delete integration
+		dangerZone: "Zona de peligro",
+		deleteIntegration: "Eliminar esta integración",
+		deleteIntegrationDesc: "Esto eliminará el agente de tu configuración. Esta acción no se puede deshacer.",
+		confirmDeleteTitle: "¿Eliminar integración?",
+		confirmDeleteMessage: "¿Estás seguro de que quieres eliminar",
+
+		// Model management
+		availableModels: "Modelos disponibles",
+		availableModelsDesc: "Desactiva los modelos que no quieras usar"
 	},
 
 	hi: {
@@ -957,7 +1015,18 @@ export const SETTINGS_LOCALES: Record<LanguageCode, SettingsLocale> = {
 		notAuthenticated: "प्रमाणित नहीं",
 		notAuthenticatedDesc: "सीमाएं देखने के लिए CLI में लॉग इन करें",
 		limitsError: "सीमाएं प्राप्त करने में विफल",
-		loginToCli: "CLI में लॉग इन करें"
+		loginToCli: "CLI में लॉग इन करें",
+
+		// Delete integration
+		dangerZone: "खतरनाक क्षेत्र",
+		deleteIntegration: "यह इंटीग्रेशन हटाएं",
+		deleteIntegrationDesc: "यह आपकी सेटिंग्स से एजेंट को हटा देगा। यह क्रिया पूर्ववत नहीं की जा सकती।",
+		confirmDeleteTitle: "इंटीग्रेशन हटाएं?",
+		confirmDeleteMessage: "क्या आप वाकई हटाना चाहते हैं",
+
+		// Model management
+		availableModels: "उपलब्ध मॉडल",
+		availableModelsDesc: "जिन मॉडलों का उपयोग नहीं करना चाहते उन्हें अक्षम करें"
 	},
 
 	zh: {
@@ -1094,7 +1163,18 @@ export const SETTINGS_LOCALES: Record<LanguageCode, SettingsLocale> = {
 		notAuthenticated: "未认证",
 		notAuthenticatedDesc: "登录 CLI 查看限制",
 		limitsError: "获取限制失败",
-		loginToCli: "登录 CLI"
+		loginToCli: "登录 CLI",
+
+		// Delete integration
+		dangerZone: "危险区域",
+		deleteIntegration: "删除此集成",
+		deleteIntegrationDesc: "这将从您的设置中删除代理。此操作无法撤消。",
+		confirmDeleteTitle: "删除集成？",
+		confirmDeleteMessage: "您确定要删除吗",
+
+		// Model management
+		availableModels: "可用模型",
+		availableModelsDesc: "禁用您不想使用的模型"
 	},
 
 	ja: {
@@ -1231,7 +1311,18 @@ export const SETTINGS_LOCALES: Record<LanguageCode, SettingsLocale> = {
 		notAuthenticated: "未認証",
 		notAuthenticatedDesc: "制限を表示するには CLI にログイン",
 		limitsError: "制限の取得に失敗",
-		loginToCli: "CLI にログイン"
+		loginToCli: "CLI にログイン",
+
+		// Delete integration
+		dangerZone: "危険ゾーン",
+		deleteIntegration: "この統合を削除",
+		deleteIntegrationDesc: "これにより、設定からエージェントが削除されます。この操作は元に戻せません。",
+		confirmDeleteTitle: "統合を削除しますか？",
+		confirmDeleteMessage: "本当に削除しますか",
+
+		// Model management
+		availableModels: "利用可能なモデル",
+		availableModelsDesc: "使用したくないモデルを無効にする"
 	}
 };
 

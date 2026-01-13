@@ -66,6 +66,21 @@ export interface ButtonLocale {
 	resend: string;
 	// Input placeholder
 	inputPlaceholder: string;
+	// No agents screen
+	noAgentsTitle: string;
+	noAgentsSubtitle: string;
+	openSettings: string;
+	noAgentsPlaceholder: string;
+	// Delete integration
+	dangerZone: string;
+	deleteIntegration: string;
+	deleteIntegrationDesc: string;
+	confirmDeleteTitle: string;
+	confirmDeleteMessage: string;
+	// Unavailable agent
+	unavailableAgentTitle: string;
+	unavailableAgentSubtitle: string;
+	unavailableAgentPlaceholder: string;
 }
 
 export const BUTTON_LOCALES: Record<LanguageCode, ButtonLocale> = {
@@ -125,7 +140,20 @@ export const BUTTON_LOCALES: Record<LanguageCode, ButtonLocale> = {
 		edit: "Редактировать",
 		cancelEdit: "Отмена",
 		resend: "Отправить",
-		inputPlaceholder: "Отправить сообщение... (/ для команд)"
+		inputPlaceholder: "Отправить сообщение... (/ для команд)",
+		noAgentsTitle: "Агенты не настроены",
+		noAgentsSubtitle: "Добавьте AI агента в настройках плагина, чтобы начать общение",
+		openSettings: "Открыть настройки",
+		noAgentsPlaceholder: "Сначала настройте агента...",
+		dangerZone: "Опасная зона",
+		deleteIntegration: "Удалить эту интеграцию",
+		deleteIntegrationDesc: "Это удалит агента из настроек. Действие нельзя отменить.",
+		confirmDeleteTitle: "Удалить интеграцию?",
+		confirmDeleteMessage: "Вы уверены, что хотите удалить",
+		// Unavailable agent
+		unavailableAgentTitle: "Агент недоступен",
+		unavailableAgentSubtitle: "Агент этого диалога был удалён или отключён. Переключитесь на другой диалог или создайте новый.",
+		unavailableAgentPlaceholder: "Агент недоступен..."
 	},
 	en: {
 		copy: "Copy",
@@ -183,7 +211,20 @@ export const BUTTON_LOCALES: Record<LanguageCode, ButtonLocale> = {
 		edit: "Edit",
 		cancelEdit: "Cancel",
 		resend: "Send",
-		inputPlaceholder: "Send a message... (type / for commands)"
+		inputPlaceholder: "Send a message... (type / for commands)",
+		noAgentsTitle: "No agents configured",
+		noAgentsSubtitle: "Add an AI agent in the plugin settings to start chatting",
+		openSettings: "Open Settings",
+		noAgentsPlaceholder: "Configure an agent first...",
+		dangerZone: "Danger Zone",
+		deleteIntegration: "Delete this integration",
+		deleteIntegrationDesc: "This will remove the agent from your settings. This action cannot be undone.",
+		confirmDeleteTitle: "Delete Integration?",
+		confirmDeleteMessage: "Are you sure you want to delete",
+		// Unavailable agent
+		unavailableAgentTitle: "Agent unavailable",
+		unavailableAgentSubtitle: "This conversation's agent has been deleted or disabled. Switch to another conversation or create a new one.",
+		unavailableAgentPlaceholder: "Agent unavailable..."
 	},
 	fr: {
 		copy: "Copier",
@@ -241,7 +282,20 @@ export const BUTTON_LOCALES: Record<LanguageCode, ButtonLocale> = {
 		edit: "Modifier",
 		cancelEdit: "Annuler",
 		resend: "Envoyer",
-		inputPlaceholder: "Envoyer un message... (/ pour les commandes)"
+		inputPlaceholder: "Envoyer un message... (/ pour les commandes)",
+		noAgentsTitle: "Aucun agent configuré",
+		noAgentsSubtitle: "Ajoutez un agent IA dans les paramètres du plugin pour commencer",
+		openSettings: "Ouvrir les paramètres",
+		noAgentsPlaceholder: "Configurez d'abord un agent...",
+		dangerZone: "Zone dangereuse",
+		deleteIntegration: "Supprimer cette intégration",
+		deleteIntegrationDesc: "Cela supprimera l'agent de vos paramètres. Cette action est irréversible.",
+		confirmDeleteTitle: "Supprimer l'intégration ?",
+		confirmDeleteMessage: "Êtes-vous sûr de vouloir supprimer",
+		// Unavailable agent
+		unavailableAgentTitle: "Agent indisponible",
+		unavailableAgentSubtitle: "L'agent de cette conversation a été supprimé ou désactivé. Passez à une autre conversation ou créez-en une nouvelle.",
+		unavailableAgentPlaceholder: "Agent indisponible..."
 	},
 	de: {
 		copy: "Kopieren",
@@ -299,7 +353,20 @@ export const BUTTON_LOCALES: Record<LanguageCode, ButtonLocale> = {
 		edit: "Bearbeiten",
 		cancelEdit: "Abbrechen",
 		resend: "Senden",
-		inputPlaceholder: "Nachricht senden... (/ für Befehle)"
+		inputPlaceholder: "Nachricht senden... (/ für Befehle)",
+		noAgentsTitle: "Keine Agenten konfiguriert",
+		noAgentsSubtitle: "Fügen Sie einen KI-Agenten in den Plugin-Einstellungen hinzu",
+		openSettings: "Einstellungen öffnen",
+		noAgentsPlaceholder: "Konfigurieren Sie zuerst einen Agenten...",
+		dangerZone: "Gefahrenzone",
+		deleteIntegration: "Diese Integration löschen",
+		deleteIntegrationDesc: "Dies entfernt den Agenten aus Ihren Einstellungen. Diese Aktion kann nicht rückgängig gemacht werden.",
+		confirmDeleteTitle: "Integration löschen?",
+		confirmDeleteMessage: "Sind Sie sicher, dass Sie löschen möchten",
+		// Unavailable agent
+		unavailableAgentTitle: "Agent nicht verfügbar",
+		unavailableAgentSubtitle: "Der Agent dieser Konversation wurde gelöscht oder deaktiviert. Wechseln Sie zu einer anderen Konversation oder erstellen Sie eine neue.",
+		unavailableAgentPlaceholder: "Agent nicht verfügbar..."
 	},
 	es: {
 		copy: "Copiar",
@@ -357,7 +424,20 @@ export const BUTTON_LOCALES: Record<LanguageCode, ButtonLocale> = {
 		edit: "Editar",
 		cancelEdit: "Cancelar",
 		resend: "Enviar",
-		inputPlaceholder: "Enviar mensaje... (/ para comandos)"
+		inputPlaceholder: "Enviar mensaje... (/ para comandos)",
+		noAgentsTitle: "No hay agentes configurados",
+		noAgentsSubtitle: "Añade un agente IA en la configuración del plugin para comenzar",
+		openSettings: "Abrir configuración",
+		noAgentsPlaceholder: "Configura primero un agente...",
+		dangerZone: "Zona peligrosa",
+		deleteIntegration: "Eliminar esta integración",
+		deleteIntegrationDesc: "Esto eliminará el agente de tu configuración. Esta acción no se puede deshacer.",
+		confirmDeleteTitle: "¿Eliminar integración?",
+		confirmDeleteMessage: "¿Estás seguro de que quieres eliminar",
+		// Unavailable agent
+		unavailableAgentTitle: "Agente no disponible",
+		unavailableAgentSubtitle: "El agente de esta conversación ha sido eliminado o desactivado. Cambia a otra conversación o crea una nueva.",
+		unavailableAgentPlaceholder: "Agente no disponible..."
 	},
 	hi: {
 		copy: "कॉपी करें",
@@ -415,7 +495,20 @@ export const BUTTON_LOCALES: Record<LanguageCode, ButtonLocale> = {
 		edit: "संपादित करें",
 		cancelEdit: "रद्द करें",
 		resend: "भेजें",
-		inputPlaceholder: "संदेश भेजें... (कमांड के लिए /)"
+		inputPlaceholder: "संदेश भेजें... (कमांड के लिए /)",
+		noAgentsTitle: "कोई एजेंट कॉन्फ़िगर नहीं है",
+		noAgentsSubtitle: "चैट शुरू करने के लिए प्लगइन सेटिंग्स में AI एजेंट जोड़ें",
+		openSettings: "सेटिंग्स खोलें",
+		noAgentsPlaceholder: "पहले एजेंट कॉन्फ़िगर करें...",
+		dangerZone: "खतरनाक क्षेत्र",
+		deleteIntegration: "इस इंटीग्रेशन को हटाएं",
+		deleteIntegrationDesc: "यह आपकी सेटिंग्स से एजेंट को हटा देगा। यह क्रिया पूर्ववत नहीं की जा सकती।",
+		confirmDeleteTitle: "इंटीग्रेशन हटाएं?",
+		confirmDeleteMessage: "क्या आप वाकई हटाना चाहते हैं",
+		// Unavailable agent
+		unavailableAgentTitle: "एजेंट उपलब्ध नहीं",
+		unavailableAgentSubtitle: "इस वार्तालाप का एजेंट हटा दिया गया या अक्षम कर दिया गया है। किसी अन्य वार्तालाप पर स्विच करें या नया बनाएं।",
+		unavailableAgentPlaceholder: "एजेंट उपलब्ध नहीं..."
 	},
 	zh: {
 		copy: "复制",
@@ -473,7 +566,20 @@ export const BUTTON_LOCALES: Record<LanguageCode, ButtonLocale> = {
 		edit: "编辑",
 		cancelEdit: "取消",
 		resend: "发送",
-		inputPlaceholder: "发送消息... (/ 查看命令)"
+		inputPlaceholder: "发送消息... (/ 查看命令)",
+		noAgentsTitle: "未配置代理",
+		noAgentsSubtitle: "在插件设置中添加 AI 代理以开始聊天",
+		openSettings: "打开设置",
+		noAgentsPlaceholder: "请先配置代理...",
+		dangerZone: "危险区域",
+		deleteIntegration: "删除此集成",
+		deleteIntegrationDesc: "这将从您的设置中删除代理。此操作无法撤消。",
+		confirmDeleteTitle: "删除集成？",
+		confirmDeleteMessage: "您确定要删除吗",
+		// Unavailable agent
+		unavailableAgentTitle: "代理不可用",
+		unavailableAgentSubtitle: "此对话的代理已被删除或禁用。切换到其他对话或创建新对话。",
+		unavailableAgentPlaceholder: "代理不可用..."
 	},
 	ja: {
 		copy: "コピー",
@@ -531,7 +637,20 @@ export const BUTTON_LOCALES: Record<LanguageCode, ButtonLocale> = {
 		edit: "編集",
 		cancelEdit: "キャンセル",
 		resend: "送信",
-		inputPlaceholder: "メッセージを送信... (/ でコマンド)"
+		inputPlaceholder: "メッセージを送信... (/ でコマンド)",
+		noAgentsTitle: "エージェントが設定されていません",
+		noAgentsSubtitle: "チャットを開始するには、プラグイン設定で AI エージェントを追加してください",
+		openSettings: "設定を開く",
+		noAgentsPlaceholder: "まずエージェントを設定してください...",
+		dangerZone: "危険ゾーン",
+		deleteIntegration: "この統合を削除",
+		deleteIntegrationDesc: "設定からエージェントが削除されます。この操作は元に戻せません。",
+		confirmDeleteTitle: "統合を削除しますか？",
+		confirmDeleteMessage: "本当に削除しますか",
+		// Unavailable agent
+		unavailableAgentTitle: "エージェントが利用できません",
+		unavailableAgentSubtitle: "この会話のエージェントは削除または無効化されました。別の会話に切り替えるか、新しい会話を作成してください。",
+		unavailableAgentPlaceholder: "エージェントが利用できません..."
 	}
 };
 

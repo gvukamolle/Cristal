@@ -359,7 +359,7 @@ export class CristalSettingTab extends PluginSettingTab {
 
 		// Icon based on CLI type
 		const iconEl = headerEl.createSpan({ cls: "cristal-agent-card-icon" });
-		setIcon(iconEl, agent.cliType === "claude" ? "sparkles" : "bot");
+		setIcon(iconEl, agent.cliType === "claude" ? "sparkles" : "code");
 
 		// Name wrapper (text + edit button OR input + save button)
 		const nameWrapper = headerEl.createDiv({ cls: "cristal-agent-card-name-wrapper" });
@@ -684,13 +684,25 @@ class AgentSettingsModal extends Modal {
 				}));
 
 		// Model selection (no /model mention - feature removed)
-		const models = this.agent.cliType === "claude" ? CLAUDE_MODELS : CODEX_MODELS;
+		const allModels = this.agent.cliType === "claude" ? CLAUDE_MODELS : CODEX_MODELS;
+		const disabledModels = this.agent.disabledModels || [];
+		const enabledModels = allModels.filter(m => !disabledModels.includes(m.value));
+
 		new Setting(contentEl)
 			.setName(this.locale.defaultModel)
 			.setDesc(this.locale.defaultModelDescNoSlash)
 			.addDropdown(dropdown => {
-				for (const model of models) {
+				for (const model of enabledModels) {
 					dropdown.addOption(model.value, model.label);
+				}
+				// If current model is disabled, select first enabled
+				const currentModelEnabled = enabledModels.some(m => m.value === this.agent.model);
+				if (!currentModelEnabled && enabledModels.length > 0) {
+					const firstEnabled = enabledModels[0];
+					if (firstEnabled) {
+						this.agent.model = firstEnabled.value;
+						this.plugin.saveSettings();
+					}
 				}
 				dropdown
 					.setValue(this.agent.model)
@@ -699,6 +711,44 @@ class AgentSettingsModal extends Modal {
 						await this.plugin.saveSettings();
 					});
 			});
+
+		// Available Models section (toggles to disable models)
+		contentEl.createEl("h3", { text: this.locale.availableModels || "Available Models" });
+		contentEl.createEl("p", {
+			cls: "cristal-settings-note",
+			text: this.locale.availableModelsDesc || "Disable models you don't want to use"
+		});
+
+		for (const model of allModels) {
+			const isEnabled = !disabledModels.includes(model.value);
+			new Setting(contentEl)
+				.setName(model.label)
+				.addToggle(toggle => toggle
+					.setValue(isEnabled)
+					.onChange(async (value) => {
+						if (!this.agent.disabledModels) {
+							this.agent.disabledModels = [];
+						}
+						if (value) {
+							// Enable model - remove from disabled list
+							this.agent.disabledModels = this.agent.disabledModels.filter(m => m !== model.value);
+						} else {
+							// Disable model - add to disabled list
+							if (!this.agent.disabledModels.includes(model.value)) {
+								this.agent.disabledModels.push(model.value);
+							}
+							// If this was the current model, switch to first enabled
+							if (this.agent.model === model.value) {
+								const remaining = allModels.filter(m => !this.agent.disabledModels!.includes(m.value));
+								const firstRemaining = remaining[0];
+								if (firstRemaining) {
+									this.agent.model = firstRemaining.value;
+								}
+							}
+						}
+						await this.plugin.saveSettings();
+					}));
+		}
 
 		// Claude-specific settings
 		if (this.agent.cliType === "claude") {
@@ -782,17 +832,45 @@ class AgentSettingsModal extends Modal {
 		// Getting Started section (collapsible)
 		this.displayGettingStarted(contentEl);
 
-		// Close button
-		const buttonContainer = contentEl.createDiv({ cls: "cristal-modal-buttons" });
-		const closeBtn = buttonContainer.createEl("button", {
-			text: this.locale.cancelButton || "Close",
-			cls: "mod-cta"
+		// Danger Zone - Delete Integration
+		contentEl.createEl("h3", {
+			text: this.locale.dangerZone || "Danger Zone",
+			cls: "cristal-danger-zone-title"
 		});
-		closeBtn.addEventListener("click", () => {
-			this.onSave();
-			this.close();
-		});
-	}
+
+		new Setting(contentEl)
+			.setName(this.locale.deleteIntegration || "Delete this integration")
+			.setDesc(this.locale.deleteIntegrationDesc || "This will remove the agent from your settings. This action cannot be undone.")
+			.addButton(button => button
+				.setButtonText(this.locale.deleteButton || "Delete")
+				.setWarning()
+				.onClick(async () => {
+					// Confirmation dialog
+					const confirmed = await this.confirmDelete();
+					if (!confirmed) return;
+
+					// Remove agent
+					this.plugin.settings.agents = this.plugin.settings.agents.filter(
+						a => a.id !== this.agent.id
+					);
+
+					// Reset default agent if needed
+					if (this.plugin.settings.defaultAgentId === this.agent.id) {
+						const remaining = this.plugin.settings.agents.find(a => a.enabled);
+						this.plugin.settings.defaultAgentId = remaining?.id || null;
+					}
+
+					await this.plugin.saveSettings();
+					this.close();
+
+					// Refresh settings tab
+					const settingsTab = (this.app as any).setting.activeTab;
+					if (settingsTab?.display) {
+						settingsTab.display();
+					}
+				}));
+
+		}
 
 	private async checkAndDisplayCLIStatus(container: HTMLElement): Promise<void> {
 		container.empty();
@@ -982,6 +1060,74 @@ class AgentSettingsModal extends Modal {
 
 			infoEl.createEl("p", { cls: "cristal-settings-note", text: this.locale.subscriptionNote });
 		}
+	}
+
+	private async confirmDelete(): Promise<boolean> {
+		return new Promise(resolve => {
+			const modal = new ConfirmDeleteModal(
+				this.app,
+				this.locale.confirmDeleteTitle || "Delete Integration?",
+				`${this.locale.confirmDeleteMessage || "Are you sure you want to delete"} "${this.agent.name}"?`,
+				() => resolve(true),
+				() => resolve(false)
+			);
+			modal.open();
+		});
+	}
+
+	onClose(): void {
+		const { contentEl } = this;
+		contentEl.empty();
+		this.onSave();
+	}
+}
+
+/**
+ * Confirmation modal for deleting an integration
+ */
+class ConfirmDeleteModal extends Modal {
+	private title: string;
+	private message: string;
+	private onConfirm: () => void;
+	private onCancel: () => void;
+
+	constructor(
+		app: App,
+		title: string,
+		message: string,
+		onConfirm: () => void,
+		onCancel: () => void
+	) {
+		super(app);
+		this.title = title;
+		this.message = message;
+		this.onConfirm = onConfirm;
+		this.onCancel = onCancel;
+	}
+
+	onOpen(): void {
+		const { contentEl } = this;
+		contentEl.addClass("cristal-confirm-delete-modal");
+
+		contentEl.createEl("h2", { text: this.title });
+		contentEl.createEl("p", { text: this.message });
+
+		const buttonContainer = contentEl.createDiv({ cls: "cristal-confirm-buttons" });
+
+		const cancelBtn = buttonContainer.createEl("button", { text: "Cancel" });
+		cancelBtn.addEventListener("click", () => {
+			this.onCancel();
+			this.close();
+		});
+
+		const confirmBtn = buttonContainer.createEl("button", {
+			text: "Delete",
+			cls: "mod-warning"
+		});
+		confirmBtn.addEventListener("click", () => {
+			this.onConfirm();
+			this.close();
+		});
 	}
 
 	onClose(): void {
