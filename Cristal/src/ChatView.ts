@@ -60,14 +60,11 @@ export class CristalChatView extends ItemView {
 	private mentionStartIndex: number = -1;
 	private highlightOverlayEl: HTMLElement | null = null;
 
-	// Context indicator & popup
-	private contextIndicatorBtnEl: HTMLElement;
-	private contextRingEl: SVGSVGElement;
-	private contextPercentEl: HTMLElement;
-	private contextUpdateVersion: number = 0;  // Race condition protection
-	private contextPopupEl: HTMLElement;
-	private contextPopupInfoEl: HTMLElement;
-	private isContextPopupOpen: boolean = false;
+	// Thinking toggle button
+	private thinkingToggleBtn: HTMLButtonElement;
+
+	// Race condition protection for file context updates
+	private contextUpdateVersion: number = 0;
 
 	// Context tracking (per session)
 	// Dynamic limits based on provider:
@@ -248,34 +245,17 @@ export class CristalChatView extends ItemView {
 		// Initialize Codex reasoning mode from agent settings
 		this.codexReasoningEnabled = defaultAgent?.reasoningEnabled || false;
 
-		// Context indicator (right after model)
-		this.contextIndicatorBtnEl = leftGroup.createDiv({ cls: "cristal-context-indicator-btn" });
-
-		// SVG ring (starts at 0%)
-		this.contextRingEl = this.createRingIndicator(0);
-		this.contextIndicatorBtnEl.appendChild(this.contextRingEl);
-
-		// Percentage text
-		this.contextPercentEl = this.contextIndicatorBtnEl.createSpan({
-			cls: "cristal-context-percent",
-			text: "0%"
+		// Thinking/Reasoning toggle button (works for both Claude and Codex)
+		this.thinkingToggleBtn = leftGroup.createEl("button", {
+			cls: "cristal-thinking-toggle-btn",
+			attr: { "aria-label": "Extended thinking" }
 		});
+		setIcon(this.thinkingToggleBtn, "brain");
+		this.updateThinkingButton();
+		this.thinkingToggleBtn.addEventListener("click", () => this.toggleThinkingMode());
 
-		// Context popup (inside indicator for proper positioning)
-		this.contextPopupEl = this.contextIndicatorBtnEl.createDiv({ cls: "cristal-context-popup" });
-		this.setupContextPopup();
-
-		// Click handler for popup (after popup is created)
-		this.contextIndicatorBtnEl.addEventListener("click", (e) => {
-			e.stopPropagation();
-			this.toggleContextPopup();
-		});
-
-		// Close popup on click outside
+		// Close model autocomplete on click outside
 		document.addEventListener("click", (e) => {
-			if (!this.contextIndicatorBtnEl.contains(e.target as Node)) {
-				this.closeContextPopup();
-			}
 			// Close model autocomplete on click outside (but not if difficulty autocomplete is showing)
 			if (!this.difficultyAutocompleteVisible &&
 				!this.modelIndicatorEl.contains(e.target as Node) &&
@@ -567,7 +547,6 @@ export class CristalChatView extends ItemView {
 				// UI updates only for active session
 				if (isActiveSession) {
 					this.tokenStats = session.tokenStats;
-					this.updateTokenIndicator();
 
 					// Check if we need to trigger auto-compact (both providers)
 					const usage = this.calculateContextUsage(this.tokenStats);
@@ -613,110 +592,57 @@ export class CristalChatView extends ItemView {
 		}
 	}
 
-	private createRingIndicator(percentage: number): SVGSVGElement {
-		const size = 18;
-		const strokeWidth = 2.5;
-		const radius = (size - strokeWidth) / 2;
-		const circumference = 2 * Math.PI * radius;
-		const offset = circumference - (percentage / 100) * circumference;
-
-		// Determine color based on percentage (hardcoded colors for SVG compatibility)
-		const color =
-			percentage < 50 ? "#22c55e" :   // green
-			percentage < 75 ? "#eab308" :   // yellow
-			percentage < 95 ? "#f97316" :   // orange
-			"#ef4444";                       // red
-
-		const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-		svg.setAttribute("width", String(size));
-		svg.setAttribute("height", String(size));
-		svg.setAttribute("viewBox", `0 0 ${size} ${size}`);
-		svg.classList.add("cristal-usage-ring");
-
-		// Background ring (gray)
-		const bgCircle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-		bgCircle.setAttribute("cx", String(size / 2));
-		bgCircle.setAttribute("cy", String(size / 2));
-		bgCircle.setAttribute("r", String(radius));
-		bgCircle.setAttribute("fill", "none");
-		bgCircle.setAttribute("stroke", "#4b5563");  // gray for background
-		bgCircle.setAttribute("stroke-width", String(strokeWidth));
-		svg.appendChild(bgCircle);
-
-		// Progress ring
-		const progressCircle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-		progressCircle.setAttribute("cx", String(size / 2));
-		progressCircle.setAttribute("cy", String(size / 2));
-		progressCircle.setAttribute("r", String(radius));
-		progressCircle.setAttribute("fill", "none");
-		progressCircle.setAttribute("stroke", color);
-		progressCircle.setAttribute("stroke-width", String(strokeWidth));
-		progressCircle.setAttribute("stroke-dasharray", String(circumference));
-		progressCircle.setAttribute("stroke-dashoffset", String(offset));
-		progressCircle.setAttribute("stroke-linecap", "round");
-		progressCircle.setAttribute("transform", `rotate(-90 ${size / 2} ${size / 2})`);
-		progressCircle.classList.add("cristal-usage-progress");
-		svg.appendChild(progressCircle);
-
-		return svg;
-	}
-
-	private updateTokenIndicator(): void {
-		const usage = this.calculateContextUsage(this.tokenStats);
-
-		// Update percentage text
-		this.contextPercentEl.setText(`${usage.percentage}%`);
-
-		// Recreate ring with new percentage
-		const newRing = this.createRingIndicator(usage.percentage);
-		this.contextRingEl.replaceWith(newRing);
-		this.contextRingEl = newRing;
-
-		// Update popup info if open
-		if (this.isContextPopupOpen) {
-			this.updateContextPopupInfo();
+	// Thinking toggle methods
+	private toggleThinkingMode(): void {
+		if (this.currentProvider === "claude") {
+			this.thinkingEnabled = !this.thinkingEnabled;
+		} else if (this.currentProvider === "codex") {
+			// Toggle between "off" and "xhigh" (высокий режим)
+			const currentReasoning = this.getCodexReasoningLevel();
+			const newLevel = currentReasoning === "off" ? "xhigh" : "off";
+			this.setCodexReasoningLevel(newLevel);
 		}
+		this.updateThinkingButton();
 	}
 
-	// Context popup methods
-	private setupContextPopup(): void {
-		const locale = getButtonLocale(this.plugin.settings.language);
+	private updateThinkingButton(): void {
+		const isClaude = this.currentProvider === "claude";
+		let isActive: boolean;
 
-		// Stop propagation on popup itself to prevent closing when clicking inside
-		this.contextPopupEl.addEventListener("click", (e) => {
-			e.stopPropagation();
-		});
-
-		// Context info section
-		this.contextPopupInfoEl = this.contextPopupEl.createDiv({ cls: "cristal-context-popup-info" });
-
-		// Summary button
-		const summaryBtn = this.contextPopupEl.createEl("button", {
-			cls: "cristal-summary-btn",
-			text: locale.summary
-		});
-		summaryBtn.addEventListener("click", () => this.runCompact());
-	}
-
-	private toggleContextPopup(): void {
-		if (this.isContextPopupOpen) {
-			this.closeContextPopup();
+		if (isClaude) {
+			isActive = this.thinkingEnabled;
 		} else {
-			this.openContextPopup();
+			// Codex: active when reasoning !== "off"
+			isActive = this.getCodexReasoningLevel() !== "off";
 		}
+
+		// Update state
+		this.thinkingToggleBtn.toggleClass("cristal-thinking-toggle-active", isActive);
+
+		// Tooltip
+		const locale = getButtonLocale(this.plugin.settings.language);
+		this.thinkingToggleBtn.setAttribute("aria-label",
+			isClaude ? (locale.thinkingDeeper || "Think deeper") : (locale.deepReasoning || "Deep reasoning")
+		);
 	}
 
-	private openContextPopup(): void {
-		this.isContextPopupOpen = true;
-		this.contextPopupEl.addClass("cristal-context-popup-open");
-		this.contextIndicatorBtnEl.addClass("cristal-context-indicator-btn-active");
-		this.updateContextPopupInfo();
+	private getCodexReasoningLevel(): "off" | "medium" | "xhigh" {
+		const agent = this.plugin.settings.agents.find(
+			a => a.cliType === "codex" && a.enabled
+		);
+		return agent?.codexPermissions?.reasoning || "medium";
 	}
 
-	private closeContextPopup(): void {
-		this.isContextPopupOpen = false;
-		this.contextPopupEl.removeClass("cristal-context-popup-open");
-		this.contextIndicatorBtnEl.removeClass("cristal-context-indicator-btn-active");
+	private setCodexReasoningLevel(level: "off" | "medium" | "xhigh"): void {
+		const agent = this.plugin.settings.agents.find(
+			a => a.cliType === "codex" && a.enabled
+		);
+		if (agent?.codexPermissions) {
+			agent.codexPermissions.reasoning = level;
+			this.plugin.saveSettings();
+			// Write to ~/.codex/config.toml
+			setCodexReasoningLevel(level);
+		}
 	}
 
 	// Provider indicator methods
@@ -756,6 +682,7 @@ export class CristalChatView extends ItemView {
 
 		this.updateProviderIndicator();
 		this.updateModelIndicatorState();
+		this.updateThinkingButton();
 
 		// Update placeholder text
 		this.inputEl.placeholder = this.currentProvider === "claude"
@@ -868,6 +795,7 @@ export class CristalChatView extends ItemView {
 				e.stopPropagation();
 				this.thinkingEnabled = !this.thinkingEnabled;
 				toggleTrack.toggleClass("cristal-thinking-switch-on", this.thinkingEnabled);
+				this.updateThinkingButton();
 			});
 		}
 
@@ -892,16 +820,18 @@ export class CristalChatView extends ItemView {
 			const toggleEl = reasoningItemEl.createDiv({ cls: "cristal-thinking-switch" });
 			const toggleTrack = toggleEl.createDiv({ cls: "cristal-thinking-switch-track" });
 			toggleTrack.createDiv({ cls: "cristal-thinking-switch-thumb" });
-			if (this.codexReasoningEnabled) {
+			if (this.getCodexReasoningLevel() !== "off") {
 				toggleTrack.addClass("cristal-thinking-switch-on");
 			}
 
 			reasoningItemEl.addEventListener("click", (e) => {
 				e.stopPropagation();
-				this.codexReasoningEnabled = !this.codexReasoningEnabled;
-				toggleTrack.toggleClass("cristal-thinking-switch-on", this.codexReasoningEnabled);
-				// Sync to ~/.codex/config.toml
-				setCodexReasoningLevel(this.codexReasoningEnabled ? "xhigh" : "medium");
+				// Toggle between "off" and "xhigh"
+				const currentLevel = this.getCodexReasoningLevel();
+				const newLevel = currentLevel === "off" ? "xhigh" : "off";
+				this.setCodexReasoningLevel(newLevel);
+				toggleTrack.toggleClass("cristal-thinking-switch-on", newLevel !== "off");
+				this.updateThinkingButton();
 			});
 		}
 
@@ -1086,61 +1016,6 @@ export class CristalChatView extends ItemView {
 		this.sendMessage();
 	}
 
-	private updateContextPopupInfo(): void {
-		const locale = getButtonLocale(this.plugin.settings.language);
-		const usage = this.calculateContextUsage(this.tokenStats);
-
-		this.contextPopupInfoEl.empty();
-
-		// Main usage line
-		this.contextPopupInfoEl.createDiv({
-			cls: "cristal-context-row cristal-context-row-main",
-			text: `${this.formatTokens(usage.used)} / ${this.formatTokens(usage.limit)}`
-		});
-
-		// Details
-		this.contextPopupInfoEl.createDiv({
-			cls: "cristal-context-row",
-			text: `${locale.inputTokens || "Input"}: ${this.formatTokens(this.tokenStats.inputTokens)}`
-		});
-		this.contextPopupInfoEl.createDiv({
-			cls: "cristal-context-row",
-			text: `${locale.outputTokens || "Output"}: ${this.formatTokens(this.tokenStats.outputTokens)}`
-		});
-
-		if (this.tokenStats.cacheReadTokens > 0) {
-			this.contextPopupInfoEl.createDiv({
-				cls: "cristal-context-row",
-				text: `${locale.cacheTokens || "Cache"}: ${this.formatTokens(this.tokenStats.cacheReadTokens)}`
-			});
-		}
-
-		// Provider info
-		const providerName = this.currentProvider === "codex" ? "Codex" : "Claude";
-		const contextWindow = this.currentProvider === "codex" ? "272k" : "200k";
-		this.contextPopupInfoEl.createDiv({
-			cls: "cristal-context-row cristal-context-row-info",
-			text: `Provider: ${providerName} (${contextWindow})`
-		});
-
-		// Info about context limit and auto-compact
-		this.contextPopupInfoEl.createDiv({
-			cls: "cristal-context-row cristal-context-row-info",
-			text: `${locale.contextLimit || "Limit"}: ${this.formatTokens(this.getContextLimit())}`
-		});
-		this.contextPopupInfoEl.createDiv({
-			cls: "cristal-context-row cristal-context-row-info",
-			text: `${locale.autoCompactAt || "Auto-compact at"} 85%`
-		});
-
-		if (this.tokenStats.compactCount > 0) {
-			this.contextPopupInfoEl.createDiv({
-				cls: "cristal-context-row cristal-context-row-info",
-				text: `${locale.compactions || "Compactions"}: ${this.tokenStats.compactCount}`
-			});
-		}
-	}
-
 	private formatTokens(n: number): string {
 		if (n === undefined || n === null || isNaN(n)) return "0";
 		if (n < 1000) return `${n}`;
@@ -1150,9 +1025,6 @@ export class CristalChatView extends ItemView {
 
 	// Compact feature methods
 	private async runCompact(): Promise<void> {
-		// Close popup
-		this.closeContextPopup();
-
 		// Check if there are messages to summarize
 		if (this.messages.length === 0) {
 			return;
@@ -1237,7 +1109,6 @@ Provide only the summary, no additional commentary.`;
 		const prevCompactCount = this.tokenStats.compactCount + 1;
 		this.tokenStats = this.initialTokenStats();
 		this.tokenStats.compactCount = prevCompactCount;
-		this.updateTokenIndicator();
 
 		// Add system message about compact
 		this.addSystemMessage("--- Context compacted ---");
@@ -1314,7 +1185,6 @@ Provide only the summary, no additional commentary.`;
 		this.tokenStats = session.tokenStats || this.initialTokenStats();
 		// Initialize lastRecordedTokens to avoid double-counting on session reload
 		this.lastRecordedTokens = this.tokenStats.inputTokens + this.tokenStats.outputTokens;
-		this.updateTokenIndicator();
 
 		// Check if any agents are configured and enabled
 		if (!this.hasEnabledAgents()) {
@@ -1823,7 +1693,6 @@ Provide only the summary, no additional commentary.`;
 		const session = this.plugin.createNewSession();
 		// Reset token stats for new session
 		this.tokenStats = this.initialTokenStats();
-		this.updateTokenIndicator();
 		this.loadSession(session);
 		this.updateSessionDropdown();
 		this.inputEl.focus();
@@ -2145,8 +2014,8 @@ Provide only the summary, no additional commentary.`;
 		// Disable model indicator
 		this.modelIndicatorEl.addClass("cristal-btn-disabled");
 
-		// Disable context indicator
-		this.contextIndicatorBtnEl.addClass("cristal-btn-disabled");
+		// Disable thinking toggle
+		this.thinkingToggleBtn.addClass("cristal-btn-disabled");
 	}
 
 	/**
@@ -2169,8 +2038,8 @@ Provide only the summary, no additional commentary.`;
 		// Enable model indicator
 		this.modelIndicatorEl.removeClass("cristal-btn-disabled");
 
-		// Enable context indicator
-		this.contextIndicatorBtnEl.removeClass("cristal-btn-disabled");
+		// Enable thinking toggle
+		this.thinkingToggleBtn.removeClass("cristal-btn-disabled");
 	}
 
 	/**
