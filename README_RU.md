@@ -273,8 +273,8 @@ CLI автоматически обновляет токены. Если не р
 ### Сборка из исходников
 
 ```bash
-git clone https://github.com/gvukamolle/crystal-cli-llm.git
-cd crystal-cli-llm
+git clone https://github.com/gvukamolle/Crystal.git
+cd Crystal
 npm install
 npm run build
 ```

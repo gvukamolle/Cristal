@@ -228,8 +228,8 @@ Check statistics in settings, use smaller models (Haiku instead of Sonnet)
 ### Building from source
 
 ```bash
-git clone https://github.com/gvukamolle/crystal-cli-llm.git
-cd crystal-cli-llm
+git clone https://github.com/gvukamolle/Crystal.git
+cd Crystal
 npm install
 npm run build
 ```
