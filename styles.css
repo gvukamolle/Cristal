@@ -1492,6 +1492,18 @@
 	margin: 8px 0;
 	max-width: 90%;
 	align-self: flex-start;
+	animation: crystal-thinking-appear 0.3s ease forwards;
+}
+
+@keyframes crystal-thinking-appear {
+	from {
+		opacity: 0;
+		transform: scale(0.98);
+	}
+	to {
+		opacity: 1;
+		transform: scale(1);
+	}
 }
 
 .crystal-thinking-header {
@@ -1521,6 +1533,12 @@
 	font-size: 13px;
 	font-weight: 500;
 	color: var(--text-muted);
+	animation: crystal-thinking-shimmer 2s ease-in-out infinite;
+}
+
+@keyframes crystal-thinking-shimmer {
+	0%, 100% { opacity: 1; }
+	50% { opacity: 0.5; }
 }
 
 .crystal-thinking-steps {
@@ -1682,6 +1700,18 @@
 	border-radius: 0 8px 8px 0;
 	margin: 8px 0;
 	overflow: hidden;
+	animation: crystal-group-appear 0.3s ease forwards;
+}
+
+@keyframes crystal-group-appear {
+	from {
+		opacity: 0;
+		transform: translateY(-4px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
 }
 
 .crystal-reasoning-group-header {
@@ -1751,9 +1781,29 @@
 	display: flex;
 	align-items: center;
 	gap: 8px;
-	padding: 4px 0;
+	padding: 4px 8px;
+	margin: 0 -8px;
 	font-size: 12px;
 	color: var(--text-muted);
+	border-radius: 4px;
+	animation: crystal-step-appear 0.3s ease forwards;
+	transition: all 0.15s ease;
+}
+
+.crystal-tool-step-item:hover {
+	background: var(--background-modifier-hover);
+	transform: translateX(4px);
+}
+
+@keyframes crystal-step-appear {
+	from {
+		opacity: 0;
+		transform: translateX(-8px);
+	}
+	to {
+		opacity: 1;
+		transform: translateX(0);
+	}
 }
 
 .crystal-tool-step-item .crystal-tool-step-icon {
@@ -2910,8 +2960,14 @@
    ============================================================================ */
 
 .crystal-personalization-modal {
-	width: 520px;
+	width: 520px !important;
 	max-width: 90vw;
+}
+
+.crystal-personalization-modal .modal-content {
+	width: 100%;
+	max-width: 520px;
+	overflow: visible;
 }
 
 .crystal-personalization-header {
@@ -2919,8 +2975,6 @@
 	align-items: center;
 	gap: 12px;
 	margin-bottom: 8px;
-	width: 520px;
-	max-width: 520px;
 }
 
 .crystal-personalization-header h2 {
@@ -2950,27 +3004,18 @@
 	font-size: 13px;
 	margin: 0 0 20px 0;
 	line-height: 1.5;
-	width: 520px;
-	max-width: 520px;
 }
 
 .crystal-personalization-form {
 	display: flex;
 	flex-direction: column;
 	gap: 16px;
-	max-height: 50vh;
-	overflow-y: auto;
-	padding-right: 4px;
-	width: 520px;
-	max-width: 520px;
 }
 
 .crystal-personalization-group {
 	display: flex;
 	flex-direction: column;
 	gap: 4px;
-	width: 520px;
-	max-width: 520px;
 }
 
 .crystal-personalization-label {
@@ -2997,7 +3042,7 @@
 }
 
 .crystal-personalization-hint {
-	margin: 0;
+	margin: 0 0 8px 0;
 	font-size: 12px;
 	color: var(--text-muted);
 	padding-left: 28px;
@@ -3278,7 +3323,7 @@
 .crystal-delete-skill-btn {
 	color: var(--text-error);
 	background: transparent;
-	border: 1px solid var(--text-error);
+	border: none;
 	padding: 6px 12px;
 	border-radius: 4px;
 	cursor: pointer;
@@ -3346,4 +3391,290 @@
 .crystal-validation-warnings li {
 	margin-bottom: 6px;
 	color: var(--text-normal);
+}
+
+/* ============================================================================
+   Node.js Installation Block
+   ============================================================================ */
+
+.crystal-node-install-block {
+	margin-top: 16px;
+	padding: 16px;
+	background: var(--background-secondary);
+	border: 1px solid var(--color-yellow);
+	border-radius: 8px;
+	animation: crystal-fade-in 0.3s ease;
+}
+
+.crystal-node-install-header {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 12px;
+}
+
+.crystal-node-install-icon {
+	display: flex;
+	color: var(--color-yellow);
+}
+
+.crystal-node-install-title {
+	font-weight: 600;
+	font-size: 14px;
+	color: var(--text-normal);
+}
+
+.crystal-node-install-buttons {
+	display: flex;
+	gap: 8px;
+	margin-top: 12px;
+	flex-wrap: wrap;
+}
+
+.crystal-os-btn {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 8px 16px;
+	background: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 6px;
+	color: var(--text-normal);
+	font-size: 13px;
+	cursor: pointer;
+	transition: all 0.15s ease;
+}
+
+.crystal-os-btn:hover {
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+	border-color: var(--interactive-accent);
+}
+
+.crystal-os-btn-icon {
+	display: flex;
+	align-items: center;
+}
+
+/* Node Install Modal */
+.crystal-node-install-modal {
+	width: 520px;
+	max-width: 90vw;
+}
+
+.crystal-node-install-modal h2 {
+	margin: 0 0 16px 0;
+	font-size: 18px;
+	color: var(--text-normal);
+}
+
+.crystal-install-option {
+	margin: 12px 0;
+	padding: 12px;
+	background: var(--background-secondary);
+	border-radius: 8px;
+}
+
+.crystal-install-option-recommended {
+	border: 1px solid var(--interactive-accent);
+}
+
+.crystal-install-option h4 {
+	margin: 0 0 8px 0;
+	font-size: 14px;
+	color: var(--text-normal);
+}
+
+.crystal-install-step {
+	margin: 8px 0;
+}
+
+.crystal-install-step span {
+	display: block;
+	font-size: 13px;
+	color: var(--text-muted);
+	margin-bottom: 4px;
+}
+
+.crystal-install-step code {
+	display: block;
+}
+
+.crystal-quick-install {
+	margin-top: 12px;
+	padding-top: 12px;
+	border-top: 1px solid var(--background-modifier-border);
+}
+
+.crystal-install-option a {
+	color: var(--text-accent);
+	text-decoration: none;
+}
+
+.crystal-install-option a:hover {
+	text-decoration: underline;
+}
+
+/* ============================================================================
+   Word-by-word fade-in animation for streaming text
+   ============================================================================ */
+
+.crystal-word-fade {
+	animation: crystal-word-appear 0.25s ease forwards;
+}
+
+@keyframes crystal-word-appear {
+	from { opacity: 0; }
+	to { opacity: 1; }
+}
+
+/* ============================================================================
+   Accessibility: Reduced motion support
+   ============================================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+	.crystal-word-fade,
+	.crystal-thinking-text,
+	.crystal-tool-step-item,
+	.crystal-reasoning-group,
+	.crystal-thinking-block,
+	.crystal-thinking-icon,
+	.crystal-node-install-block {
+		animation: none !important;
+		opacity: 1 !important;
+		transform: none !important;
+	}
+
+	.crystal-tool-step-item:hover {
+		transform: none;
+	}
+}
+
+
+/* ==============================================
+   SETTINGS RESTRUCTURE - New components
+   ============================================== */
+
+/* Settings section block */
+.crystal-settings-section {
+	padding: 16px;
+	margin-bottom: 16px;
+	background: var(--background-secondary);
+	border-radius: 8px;
+}
+
+.crystal-settings-section h3 {
+	margin: 0 0 12px 0;
+	font-size: 14px;
+	font-weight: 600;
+	color: var(--text-normal);
+}
+
+/* Settings items in section */
+.crystal-settings-section .setting-item {
+	border: none;
+	padding: 8px 0;
+}
+
+.crystal-settings-section .setting-item:first-of-type {
+	padding-top: 0;
+}
+
+/* Commands/Skills summary */
+.crystal-commands-skills-summary {
+	font-size: 13px;
+	color: var(--text-muted);
+	margin-bottom: 8px;
+}
+
+/* Collapsible sections */
+.crystal-collapsible-section {
+	margin-bottom: 8px;
+}
+
+.crystal-collapsible-section.expanded .crystal-collapsible-header {
+	border-radius: 8px 8px 0 0;
+}
+
+.crystal-collapsible-header {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 10px 12px;
+	background: var(--background-secondary);
+	border-radius: 8px;
+	cursor: pointer;
+	transition: background 0.15s ease, border-radius 0.15s ease;
+}
+
+.crystal-collapsible-header:hover {
+	background: var(--background-modifier-hover);
+}
+
+.crystal-collapsible-chevron {
+	display: flex;
+	width: 16px;
+	height: 16px;
+	color: var(--text-muted);
+}
+
+.crystal-collapsible-title {
+	font-size: 14px;
+	font-weight: 500;
+	color: var(--text-normal);
+}
+
+.crystal-collapsible-content {
+	padding: 16px;
+	background: var(--background-secondary);
+	border-radius: 0 0 8px 8px;
+}
+
+/* CLI status badge - simple checkmark */
+.crystal-cli-badge {
+	margin-left: auto;
+	font-size: 14px;
+	display: flex;
+	align-items: center;
+}
+
+.crystal-cli-badge.success {
+	color: var(--text-success);
+}
+
+.crystal-cli-badge.error {
+	color: var(--text-error);
+}
+
+/* Management modals - strict 520px width */
+.crystal-commands-modal,
+.crystal-skills-modal {
+	width: 520px !important;
+	max-width: 90vw;
+	max-height: 80vh;
+	overflow-y: auto;
+}
+
+.crystal-commands-modal h4,
+.crystal-skills-modal h4 {
+	margin: 20px 0 12px 0;
+	font-size: 13px;
+	font-weight: 600;
+	color: var(--text-muted);
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+}
+
+.crystal-commands-modal h4:first-of-type,
+.crystal-skills-modal h4:first-of-type {
+	margin-top: 8px;
+}
+
+/* Modal close button container */
+.crystal-modal-buttons {
+	display: flex;
+	justify-content: flex-end;
+	padding-top: 16px;
+	margin-top: 16px;
+	border-top: 1px solid var(--background-modifier-border);
 }

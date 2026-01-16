@@ -4,7 +4,7 @@ import type { SlashCommand, LanguageCode, ClaudeModel, AgentConfig, CLIType, Age
 import { CLAUDE_MODELS, CLI_INFO, DEFAULT_CLAUDE_PERMISSIONS, DEFAULT_AGENT_PERSONALIZATION } from "./types";
 import { getBuiltinCommands } from "./commands";
 import { LANGUAGE_NAMES } from "./systemPrompts";
-import { checkCLIInstalled, detectCLIPath } from "./cliDetector";
+import { checkCLIInstalled, detectCLIPath, checkNodeInstalled } from "./cliDetector";
 import { getSettingsLocale, type SettingsLocale } from "./settingsLocales";
 import { CreateSkillModal, ValidateSkillModal, EditSkillModal } from "./skills";
 
@@ -27,36 +27,19 @@ export class CrystalSettingTab extends PluginSettingTab {
 		// 1. Usage Statistics
 		this.displayUsageSection(containerEl);
 
-		// 2. Language selection
-		new Setting(containerEl)
-			.setName(this.locale.assistantLanguage)
-			.setDesc(this.locale.assistantLanguageDesc)
-			.addDropdown(dropdown => {
-				for (const [code, name] of Object.entries(LANGUAGE_NAMES)) {
-					dropdown.addOption(code, name);
-				}
-				dropdown
-					.setValue(this.plugin.settings.language)
-					.onChange(async (value) => {
-						this.plugin.settings.language = value as LanguageCode;
-						await this.plugin.saveSettings();
-						this.display();
-					});
-			});
+		// 2. Agent section: language, model, personalization
+		this.displayAgentSection(containerEl);
 
-		// 3. Agent Personalization
-		this.displayAgentPersonalizationSection(containerEl);
+		// 3. Commands and Skills section: summary + management buttons
+		this.displayCommandsAndSkills(containerEl);
 
-		// 4. Claude Code Integration settings
-		this.displayClaudeSettings(containerEl);
+		// 4. Permissions (collapsible)
+		this.displayPermissionsCollapsible(containerEl);
 
-		// 5. Slash Commands section
-		this.displaySlashCommandsSection(containerEl);
+		// 5. CLI Status (collapsible)
+		this.displayCliStatusCollapsible(containerEl);
 
-		// 6. Skills section
-		this.displaySkillsSectionStandalone(containerEl);
-
-		// 7. Getting Started section (at the bottom)
+		// 6. Getting Started section (at the bottom)
 		this.displayGettingStarted(containerEl);
 	}
 
@@ -578,10 +561,69 @@ export class CrystalSettingTab extends PluginSettingTab {
 			setIcon(downloadIcon, "download");
 			installBtn.createSpan({ text: this.locale.startIntegration || "Open terminal and install CLI" });
 
-			installBtn.addEventListener("click", () => {
-				this.launchCommand(installCmd);
+			installBtn.addEventListener("click", async () => {
+				// Check if Node.js is installed before opening terminal
+				const nodeStatus = await checkNodeInstalled();
+				if (nodeStatus.installed) {
+					this.launchCommand(installCmd);
+				} else {
+					this.showNodeInstallInstructions(contentArea);
+				}
 			});
 		}
+	}
+
+	private showNodeInstallInstructions(container: HTMLElement): void {
+		// Remove existing block if any
+		const existingBlock = container.querySelector(".crystal-node-install-block");
+		if (existingBlock) existingBlock.remove();
+
+		const block = container.createDiv({ cls: "crystal-node-install-block" });
+
+		// Header with warning icon
+		const header = block.createDiv({ cls: "crystal-node-install-header" });
+		const iconSpan = header.createSpan({ cls: "crystal-node-install-icon" });
+		setIcon(iconSpan, "alert-triangle");
+		header.createSpan({
+			text: this.locale.nodeRequired || "Node.js required",
+			cls: "crystal-node-install-title"
+		});
+
+		// Description
+		block.createEl("p", {
+			cls: "crystal-settings-note",
+			text: this.locale.nodeRequiredDesc || "Claude Code requires Node.js to be installed. Choose your operating system:"
+		});
+
+		// OS buttons
+		const buttonsRow = block.createDiv({ cls: "crystal-node-install-buttons" });
+
+		// macOS button
+		const macBtn = buttonsRow.createEl("button", { cls: "crystal-os-btn" });
+		const macIcon = macBtn.createSpan({ cls: "crystal-os-btn-icon" });
+		setIcon(macIcon, "apple");
+		macBtn.createSpan({ text: "macOS" });
+		macBtn.addEventListener("click", () => {
+			new NodeInstallModal(this.app, this.plugin, "macos").open();
+		});
+
+		// Windows button
+		const winBtn = buttonsRow.createEl("button", { cls: "crystal-os-btn" });
+		const winIcon = winBtn.createSpan({ cls: "crystal-os-btn-icon" });
+		setIcon(winIcon, "monitor");
+		winBtn.createSpan({ text: "Windows" });
+		winBtn.addEventListener("click", () => {
+			new NodeInstallModal(this.app, this.plugin, "windows").open();
+		});
+
+		// Linux button
+		const linuxBtn = buttonsRow.createEl("button", { cls: "crystal-os-btn" });
+		const linuxIcon = linuxBtn.createSpan({ cls: "crystal-os-btn-icon" });
+		setIcon(linuxIcon, "terminal");
+		linuxBtn.createSpan({ text: "Linux" });
+		linuxBtn.addEventListener("click", () => {
+			new NodeInstallModal(this.app, this.plugin, "linux").open();
+		});
 	}
 
 	private displaySkillsSectionStandalone(containerEl: HTMLElement): void {
@@ -912,6 +954,727 @@ export class CrystalSettingTab extends PluginSettingTab {
 		if (tokens >= 1_000) return `${(tokens / 1_000).toFixed(0)}K`;
 		return String(tokens);
 	}
+
+	// ============================================
+	// NEW RESTRUCTURED METHODS
+	// ============================================
+
+	/**
+	 * Count enabled commands (builtin + custom)
+	 */
+	private countEnabledCommands(): number {
+		const builtinCommands = getBuiltinCommands(this.plugin.settings.language);
+		const builtinEnabled = builtinCommands.filter(
+			cmd => !this.plugin.settings.disabledBuiltinCommands.includes(cmd.id)
+		).length;
+		const customEnabled = this.plugin.settings.customCommands.filter(
+			cmd => cmd.enabled !== false
+		).length;
+		return builtinEnabled + customEnabled;
+	}
+
+	/**
+	 * Count enabled skills
+	 */
+	private countEnabledSkills(): number {
+		const agent = this.plugin.getAgentByCliType("claude");
+		if (!agent) return 0;
+		return agent.enabledSkills?.length || 0;
+	}
+
+	/**
+	 * Agent section: language, model, personalization - standard Setting format
+	 */
+	private displayAgentSection(containerEl: HTMLElement): void {
+		const section = containerEl.createDiv({ cls: "crystal-settings-section" });
+		section.createEl("h3", { text: this.locale.agentSection });
+
+		// Get or create Claude agent
+		let agent = this.plugin.getAgentByCliType("claude");
+		if (!agent) {
+			const info = CLI_INFO.claude;
+			agent = {
+				id: `claude-${Date.now()}`,
+				cliType: "claude",
+				name: info.name,
+				description: info.description,
+				enabled: true,
+				cliPath: "claude",
+				model: "claude-haiku-4-5-20251001",
+				thinkingEnabled: false,
+				permissions: { ...DEFAULT_CLAUDE_PERMISSIONS },
+				enabledSkills: []
+			};
+			this.plugin.settings.agents.push(agent);
+			this.plugin.settings.defaultAgentId = agent.id;
+			this.plugin.saveSettings();
+		}
+
+		// Language dropdown
+		new Setting(section)
+			.setName(this.locale.assistantLanguage)
+			.setDesc(this.locale.assistantLanguageDesc)
+			.addDropdown(dropdown => {
+				for (const [code, name] of Object.entries(LANGUAGE_NAMES)) {
+					dropdown.addOption(code, name);
+				}
+				dropdown
+					.setValue(this.plugin.settings.language)
+					.onChange(async (value) => {
+						this.plugin.settings.language = value as LanguageCode;
+						await this.plugin.saveSettings();
+						this.display();
+					});
+			});
+
+		// Model dropdown
+		const allModels = CLAUDE_MODELS;
+		const disabledModels = agent.disabledModels || [];
+		const enabledModels = allModels.filter(m => !disabledModels.includes(m.value));
+
+		new Setting(section)
+			.setName(this.locale.defaultModel)
+			.setDesc(this.locale.defaultModelDescNoSlash)
+			.addDropdown(dropdown => {
+				for (const model of enabledModels) {
+					dropdown.addOption(model.value, model.label);
+				}
+				const currentModelEnabled = enabledModels.some(m => m.value === agent!.model);
+				if (!currentModelEnabled && enabledModels.length > 0) {
+					const firstEnabled = enabledModels[0];
+					if (firstEnabled) {
+						agent!.model = firstEnabled.value;
+						this.plugin.saveSettings();
+					}
+				}
+				dropdown
+					.setValue(agent!.model)
+					.onChange(async (value) => {
+						agent!.model = value as ClaudeModel | string;
+						await this.plugin.saveSettings();
+					});
+			});
+
+		// Personalization button
+		new Setting(section)
+			.setName(this.locale.agentPersonalization)
+			.setDesc(this.locale.personalizationDesc)
+			.addButton(btn => btn
+				.setButtonText(this.locale.personalizationNotConfigured)
+				.onClick(() => {
+					new AgentPersonalizationModal(this.app, this.plugin, () => {
+						this.display();
+					}).open();
+				}));
+	}
+
+	/**
+	 * Commands and Skills section: standard Setting format with buttons
+	 */
+	private displayCommandsAndSkills(containerEl: HTMLElement): void {
+		const section = containerEl.createDiv({ cls: "crystal-settings-section" });
+		section.createEl("h3", { text: this.locale.commandsAndSkills });
+
+		// Summary line
+		const commandsCount = this.countEnabledCommands();
+		const skillsCount = this.countEnabledSkills();
+		section.createEl("p", {
+			cls: "crystal-commands-skills-summary",
+			text: `${commandsCount} ${this.locale.commandsCount} • ${skillsCount} ${this.locale.skillsCount}`
+		});
+
+		// Commands management
+		new Setting(section)
+			.setName(this.locale.manageCommands)
+			.setDesc(this.locale.manageCommandsDesc)
+			.addButton(btn => btn
+				.setButtonText(this.locale.editButton || "Edit")
+				.onClick(() => {
+					new CommandsManagementModal(this.app, this.plugin, () => this.display()).open();
+				}));
+
+		// Skills management
+		new Setting(section)
+			.setName(this.locale.manageSkills)
+			.setDesc(this.locale.manageSkillsDesc)
+			.addButton(btn => btn
+				.setButtonText(this.locale.editButton || "Edit")
+				.onClick(() => {
+					new SkillsManagementModal(this.app, this.plugin, () => this.display()).open();
+				}));
+	}
+
+	/**
+	 * Collapsible permissions section
+	 */
+	private displayPermissionsCollapsible(containerEl: HTMLElement): void {
+		const agent = this.plugin.getAgentByCliType("claude");
+		if (!agent) return;
+
+		const section = containerEl.createDiv({ cls: "crystal-collapsible-section" });
+
+		// Header
+		const header = section.createDiv({ cls: "crystal-collapsible-header" });
+		const chevron = header.createSpan({ cls: "crystal-collapsible-chevron" });
+		setIcon(chevron, "chevron-right");
+		header.createSpan({ cls: "crystal-collapsible-title", text: this.locale.permissionsSection });
+
+		// Content (hidden by default)
+		const content = section.createDiv({ cls: "crystal-collapsible-content" });
+		content.style.display = "none";
+
+		// Render permissions content
+		this.renderPermissionsContent(content, agent);
+
+		// Toggle
+		header.addEventListener("click", () => {
+			const isHidden = content.style.display === "none";
+			content.style.display = isHidden ? "block" : "none";
+			section.toggleClass("expanded", isHidden);
+			chevron.empty();
+			setIcon(chevron, isHidden ? "chevron-down" : "chevron-right");
+		});
+	}
+
+	/**
+	 * Render permissions toggles inside container
+	 */
+	private renderPermissionsContent(container: HTMLElement, agent: AgentConfig): void {
+		const permissions = agent.permissions || { ...DEFAULT_CLAUDE_PERMISSIONS };
+
+		// Available Models section
+		container.createEl("h4", { text: this.locale.availableModels || "Available Models" });
+		container.createEl("p", {
+			cls: "crystal-settings-note",
+			text: this.locale.availableModelsDesc || "Disable models you don't want to use"
+		});
+
+		const allModels = CLAUDE_MODELS;
+		const disabledModels = agent.disabledModels || [];
+
+		for (const model of allModels) {
+			const isEnabled = !disabledModels.includes(model.value);
+			new Setting(container)
+				.setName(model.label)
+				.addToggle(toggle => toggle
+					.setValue(isEnabled)
+					.onChange(async (value) => {
+						if (!agent.disabledModels) {
+							agent.disabledModels = [];
+						}
+						if (value) {
+							agent.disabledModels = agent.disabledModels.filter(m => m !== model.value);
+						} else {
+							if (!agent.disabledModels.includes(model.value)) {
+								agent.disabledModels.push(model.value);
+							}
+							if (agent.model === model.value) {
+								const remaining = allModels.filter(m => !agent.disabledModels!.includes(m.value));
+								const firstRemaining = remaining[0];
+								if (firstRemaining) {
+									agent.model = firstRemaining.value;
+								}
+							}
+						}
+						await this.plugin.saveSettings();
+					}));
+		}
+
+		// Extended Thinking
+		container.createEl("h4", { text: this.locale.extendedThinking || "Extended Thinking" });
+		new Setting(container)
+			.setName(this.locale.extendedThinking || "Extended Thinking")
+			.setDesc(this.locale.extendedThinkingDesc || "Enable deeper analysis mode for complex tasks")
+			.addToggle(toggle => toggle
+				.setValue(permissions.extendedThinking)
+				.onChange(async (value) => {
+					if (!agent.permissions) {
+						agent.permissions = { ...DEFAULT_CLAUDE_PERMISSIONS };
+					}
+					agent.permissions.extendedThinking = value;
+					agent.thinkingEnabled = value;
+					await this.plugin.saveSettings();
+				}));
+
+		// File Operations
+		container.createEl("h4", { text: this.locale.fileOperations || "File Operations" });
+
+		new Setting(container)
+			.setName(this.locale.fileRead || "Read files")
+			.setDesc(this.locale.fileReadDesc || "Allow reading files in vault")
+			.addToggle(toggle => toggle
+				.setValue(permissions.fileRead)
+				.onChange(async (value) => {
+					if (!agent.permissions) {
+						agent.permissions = { ...DEFAULT_CLAUDE_PERMISSIONS };
+					}
+					agent.permissions.fileRead = value;
+					await this.plugin.saveSettings();
+				}));
+
+		new Setting(container)
+			.setName(this.locale.fileWrite || "Write files")
+			.setDesc(this.locale.fileWriteDesc || "Allow creating new files")
+			.addToggle(toggle => toggle
+				.setValue(permissions.fileWrite)
+				.onChange(async (value) => {
+					if (!agent.permissions) {
+						agent.permissions = { ...DEFAULT_CLAUDE_PERMISSIONS };
+					}
+					agent.permissions.fileWrite = value;
+					await this.plugin.saveSettings();
+				}));
+
+		new Setting(container)
+			.setName(this.locale.fileEdit || "Edit files")
+			.setDesc(this.locale.fileEditDesc || "Allow editing existing files")
+			.addToggle(toggle => toggle
+				.setValue(permissions.fileEdit)
+				.onChange(async (value) => {
+					if (!agent.permissions) {
+						agent.permissions = { ...DEFAULT_CLAUDE_PERMISSIONS };
+					}
+					agent.permissions.fileEdit = value;
+					await this.plugin.saveSettings();
+				}));
+
+		// Web Operations
+		container.createEl("h4", { text: this.locale.webOperations || "Web Operations" });
+
+		new Setting(container)
+			.setName(this.locale.webSearch)
+			.setDesc(this.locale.webSearchDesc)
+			.addToggle(toggle => toggle
+				.setValue(permissions.webSearch)
+				.onChange(async (value) => {
+					if (!agent.permissions) {
+						agent.permissions = { ...DEFAULT_CLAUDE_PERMISSIONS };
+					}
+					agent.permissions.webSearch = value;
+					await this.plugin.saveSettings();
+				}));
+
+		new Setting(container)
+			.setName(this.locale.webFetch)
+			.setDesc(this.locale.webFetchDesc)
+			.addToggle(toggle => toggle
+				.setValue(permissions.webFetch)
+				.onChange(async (value) => {
+					if (!agent.permissions) {
+						agent.permissions = { ...DEFAULT_CLAUDE_PERMISSIONS };
+					}
+					agent.permissions.webFetch = value;
+					await this.plugin.saveSettings();
+				}));
+
+		// Advanced
+		container.createEl("h4", { text: this.locale.advanced || "Advanced" });
+
+		new Setting(container)
+			.setName(this.locale.subAgents)
+			.setDesc(this.locale.subAgentsDesc)
+			.addToggle(toggle => toggle
+				.setValue(permissions.task)
+				.onChange(async (value) => {
+					if (!agent.permissions) {
+						agent.permissions = { ...DEFAULT_CLAUDE_PERMISSIONS };
+					}
+					agent.permissions.task = value;
+					await this.plugin.saveSettings();
+				}));
+	}
+
+	/**
+	 * Collapsible CLI status section
+	 */
+	private displayCliStatusCollapsible(containerEl: HTMLElement): void {
+		const agent = this.plugin.getAgentByCliType("claude");
+		if (!agent) return;
+
+		// Auto-detect CLI path
+		const detected = detectCLIPath();
+		if (detected.found && agent.cliPath !== detected.path) {
+			agent.cliPath = detected.path;
+			this.plugin.saveSettings();
+		}
+
+		const section = containerEl.createDiv({ cls: "crystal-collapsible-section" });
+
+		// Header
+		const header = section.createDiv({ cls: "crystal-collapsible-header" });
+		const chevron = header.createSpan({ cls: "crystal-collapsible-chevron" });
+		setIcon(chevron, "chevron-right");
+		header.createSpan({ cls: "crystal-collapsible-title", text: this.locale.cliStatusSection });
+
+		// Status badge (shows status even when collapsed)
+		const statusBadge = header.createSpan({ cls: "crystal-cli-badge" });
+
+		// Content (hidden by default)
+		const content = section.createDiv({ cls: "crystal-collapsible-content" });
+		content.style.display = "none";
+
+		// Render CLI status content
+		this.renderCliStatusContent(content, statusBadge, agent);
+
+		// Toggle
+		header.addEventListener("click", () => {
+			const isHidden = content.style.display === "none";
+			content.style.display = isHidden ? "block" : "none";
+			section.toggleClass("expanded", isHidden);
+			chevron.empty();
+			setIcon(chevron, isHidden ? "chevron-down" : "chevron-right");
+		});
+	}
+
+	/**
+	 * Render CLI status inside container, update badge
+	 */
+	private async renderCliStatusContent(
+		container: HTMLElement,
+		badge: HTMLElement,
+		agent: AgentConfig
+	): Promise<void> {
+		container.empty();
+		badge.empty();
+		badge.textContent = "...";
+
+		const status = await checkCLIInstalled(agent.cliPath);
+
+		if (status.installed) {
+			badge.addClass("success");
+			badge.removeClass("error");
+			// Show checkmark icon in badge
+			setIcon(badge, "check");
+
+			// In expanded view - just text without icon
+			container.createEl("p", {
+				cls: "crystal-settings-note",
+				text: this.locale.cliFound.replace("{version}", status.version || "?")
+			});
+
+			// Terminal button
+			const terminalSection = container.createDiv({ cls: "crystal-cli-terminal-section" });
+			terminalSection.createEl("p", {
+				cls: "crystal-settings-note crystal-terminal-desc",
+				text: this.locale.openTerminalDesc || "Open system terminal with Claude Code"
+			});
+
+			const terminalBtn = terminalSection.createEl("button", { cls: "mod-cta" });
+			const terminalIcon = terminalBtn.createSpan({ cls: "crystal-btn-icon-left" });
+			setIcon(terminalIcon, "terminal");
+			terminalBtn.createSpan({ text: this.locale.openTerminal || "Open Terminal" });
+			terminalBtn.addEventListener("click", () => {
+				this.launchCommand("claude");
+			});
+		} else {
+			badge.addClass("error");
+			badge.removeClass("success");
+			setIcon(badge, "x");
+
+			const errorEl = container.createDiv({ cls: "crystal-cli-status-item crystal-cli-status-error" });
+			const iconSpan = errorEl.createSpan({ cls: "crystal-cli-status-icon" });
+			setIcon(iconSpan, "x-circle");
+			errorEl.createSpan({ text: this.locale.cliNotFound });
+
+			// Installation hint
+			const installCmd = "npm i -g @anthropic-ai/claude-code";
+			const installHint = container.createDiv({ cls: "crystal-install-hint" });
+			installHint.createEl("p", {
+				cls: "crystal-settings-note",
+				text: this.locale.installWith + ":"
+			});
+			installHint.createEl("code", {
+				cls: "crystal-install-command",
+				text: installCmd
+			});
+
+			// Install button
+			const installBtn = container.createEl("button", { cls: "mod-cta" });
+			const downloadIcon = installBtn.createSpan({ cls: "crystal-btn-icon-left" });
+			setIcon(downloadIcon, "download");
+			installBtn.createSpan({ text: this.locale.startIntegration || "Open terminal and install CLI" });
+
+			installBtn.addEventListener("click", async () => {
+				const nodeStatus = await checkNodeInstalled();
+				if (nodeStatus.installed) {
+					this.launchCommand(installCmd);
+				} else {
+					this.showNodeInstallInstructions(container);
+				}
+			});
+		}
+	}
+}
+
+/**
+ * Modal for managing all commands (builtin + custom)
+ */
+class CommandsManagementModal extends Modal {
+	private plugin: CrystalPlugin;
+	private onSave: () => void;
+
+	private get locale(): SettingsLocale {
+		return getSettingsLocale(this.plugin.settings.language);
+	}
+
+	constructor(app: App, plugin: CrystalPlugin, onSave: () => void) {
+		super(app);
+		this.plugin = plugin;
+		this.onSave = onSave;
+	}
+
+	onOpen(): void {
+		const { contentEl } = this;
+		contentEl.empty();
+		contentEl.addClass("crystal-commands-modal");
+
+		contentEl.createEl("h2", { text: this.locale.commandsModalTitle });
+
+		// Built-in commands
+		contentEl.createEl("h4", { text: this.locale.builtinCommands });
+
+		const builtinCommands = getBuiltinCommands(this.plugin.settings.language);
+		for (const cmd of builtinCommands) {
+			const isDisabled = this.plugin.settings.disabledBuiltinCommands.includes(cmd.id);
+			new Setting(contentEl)
+				.setName(cmd.command)
+				.setDesc(cmd.description)
+				.addToggle(toggle => toggle
+					.setValue(!isDisabled)
+					.onChange(async (value) => {
+						if (value) {
+							this.plugin.settings.disabledBuiltinCommands =
+								this.plugin.settings.disabledBuiltinCommands.filter(id => id !== cmd.id);
+						} else {
+							this.plugin.settings.disabledBuiltinCommands.push(cmd.id);
+						}
+						await this.plugin.saveSettings();
+					}));
+		}
+
+		// Custom commands
+		contentEl.createEl("h4", { text: this.locale.customCommands });
+
+		// Add custom command button
+		new Setting(contentEl)
+			.setName(this.locale.addCustomCommand)
+			.setDesc(this.locale.addCustomCommandDesc)
+			.addButton(button => button
+				.setButtonText(this.locale.addButton)
+				.onClick(() => {
+					new CommandModal(this.app, this.plugin, null, () => {
+						this.onOpen(); // Refresh modal content
+						this.onSave();
+					}).open();
+				}));
+
+		// Display existing custom commands
+		for (const cmd of this.plugin.settings.customCommands) {
+			new Setting(contentEl)
+				.setName(cmd.command)
+				.setDesc(cmd.description)
+				.addToggle(toggle => toggle
+					.setValue(cmd.enabled !== false)
+					.onChange(async (value) => {
+						cmd.enabled = value;
+						await this.plugin.saveSettings();
+					}))
+				.addButton(button => button
+					.setButtonText(this.locale.editButton)
+					.onClick(() => {
+						new CommandModal(this.app, this.plugin, cmd, () => {
+							this.onOpen();
+							this.onSave();
+						}).open();
+					}))
+				.addButton(button => button
+					.setButtonText(this.locale.deleteButton)
+					.setWarning()
+					.onClick(async () => {
+						this.plugin.settings.customCommands =
+							this.plugin.settings.customCommands.filter(c => c.id !== cmd.id);
+						await this.plugin.saveSettings();
+						this.onOpen();
+						this.onSave();
+					}));
+		}
+
+		// Close button
+		const buttons = contentEl.createDiv({ cls: "crystal-modal-buttons" });
+		const closeBtn = buttons.createEl("button", { text: this.locale.closeButton || "Close" });
+		closeBtn.addEventListener("click", () => this.close());
+	}
+
+	onClose(): void {
+		const { contentEl } = this;
+		contentEl.empty();
+	}
+}
+
+/**
+ * Modal for managing all skills (builtin + custom)
+ */
+class SkillsManagementModal extends Modal {
+	private plugin: CrystalPlugin;
+	private onSave: () => void;
+
+	private get locale(): SettingsLocale {
+		return getSettingsLocale(this.plugin.settings.language);
+	}
+
+	constructor(app: App, plugin: CrystalPlugin, onSave: () => void) {
+		super(app);
+		this.plugin = plugin;
+		this.onSave = onSave;
+	}
+
+	onOpen(): void {
+		const { contentEl } = this;
+		contentEl.empty();
+		contentEl.addClass("crystal-skills-modal");
+
+		contentEl.createEl("h2", { text: this.locale.skillsModalTitle });
+
+		const agent = this.plugin.getAgentByCliType("claude");
+		if (!agent) {
+			contentEl.createEl("p", { text: "No agent found" });
+			return;
+		}
+
+		const skillRefs = this.plugin.skillLoader?.getSkillReferences(this.plugin.settings.language) || [];
+		const enabledSkills = agent.enabledSkills || [];
+		const builtinSkills = skillRefs.filter(s => s.isBuiltin);
+		const customSkills = skillRefs.filter(s => !s.isBuiltin);
+
+		// Built-in skills
+		contentEl.createEl("h4", { text: this.locale.builtinSkills || "Built-in Skills" });
+
+		if (builtinSkills.length === 0) {
+			contentEl.createEl("p", {
+				cls: "crystal-settings-note",
+				text: this.locale.noSkillsAvailable || "No skills available"
+			});
+		} else {
+			for (const skill of builtinSkills) {
+				this.renderSkillToggle(contentEl, skill, enabledSkills, false, agent);
+			}
+		}
+
+		// Custom skills
+		contentEl.createEl("h4", { text: this.locale.customSkills || "Custom Skills" });
+
+		// Add custom skill button
+		new Setting(contentEl)
+			.setName(this.locale.addCustomSkill || "Add custom skill")
+			.setDesc(this.locale.addCustomSkillDesc || "Create your own skill with custom instructions")
+			.addButton(button => button
+				.setButtonText(this.locale.addButton || "Add")
+				.onClick(() => {
+					new CreateSkillModal(
+						this.app,
+						this.plugin.skillLoader,
+						this.plugin.settings.language,
+						async (skillId: string) => {
+							await this.plugin.skillLoader.refresh();
+							new Notice(this.locale.skillCreatedSuccess?.replace("{name}", skillId) || `Skill "${skillId}" created`);
+							this.onOpen();
+							this.onSave();
+						}
+					).open();
+				}));
+
+		// Display existing custom skills
+		for (const skill of customSkills) {
+			this.renderSkillToggle(contentEl, skill, enabledSkills, true, agent);
+		}
+
+		// Close button
+		const buttons = contentEl.createDiv({ cls: "crystal-modal-buttons" });
+		const closeBtn = buttons.createEl("button", { text: this.locale.closeButton || "Close" });
+		closeBtn.addEventListener("click", () => this.close());
+	}
+
+	private renderSkillToggle(
+		container: HTMLElement,
+		skill: { id: string; name: string; description: string; isBuiltin: boolean },
+		enabledSkills: string[],
+		showValidate: boolean,
+		agent: AgentConfig
+	): void {
+		const isEnabled = enabledSkills.includes(skill.id);
+
+		const setting = new Setting(container)
+			.setName(skill.name)
+			.setDesc(skill.description)
+			.addToggle(toggle => toggle
+				.setValue(isEnabled)
+				.onChange(async (value) => {
+					if (!agent.enabledSkills) {
+						agent.enabledSkills = [];
+					}
+					if (value) {
+						if (!agent.enabledSkills.includes(skill.id)) {
+							agent.enabledSkills.push(skill.id);
+						}
+					} else {
+						agent.enabledSkills = agent.enabledSkills.filter(id => id !== skill.id);
+					}
+					await this.plugin.saveSettings();
+					await this.plugin.skillLoader?.syncSkillsForAgent(
+						agent.cliType,
+						agent.enabledSkills || []
+					);
+				}));
+
+		if (showValidate) {
+			// Edit button
+			setting.addButton(btn => btn
+				.setIcon("pencil")
+				.setTooltip(this.locale.editButton || "Edit")
+				.onClick(async () => {
+					const fullSkill = this.plugin.skillLoader.getSkill(skill.id);
+					if (fullSkill) {
+						new EditSkillModal(
+							this.app,
+							this.plugin.skillLoader,
+							fullSkill,
+							this.plugin.settings.language,
+							async () => {
+								await this.plugin.skillLoader.refresh();
+								await this.plugin.syncAllAgentSkills();
+								this.onOpen();
+								this.onSave();
+							},
+							async (deletedSkillId: string) => {
+								for (const ag of this.plugin.settings.agents) {
+									if (ag.enabledSkills?.includes(deletedSkillId)) {
+										ag.enabledSkills = ag.enabledSkills.filter(id => id !== deletedSkillId);
+									}
+								}
+								await this.plugin.saveSettings();
+								await this.plugin.skillLoader.refresh();
+								await this.plugin.syncAllAgentSkills();
+								this.onOpen();
+								this.onSave();
+							}
+						).open();
+					}
+				}));
+
+			// Validate button
+			setting.addButton(btn => btn
+				.setIcon("check-circle")
+				.setTooltip(this.locale.validateSkill || "Validate skill")
+				.onClick(() => {
+					new ValidateSkillModal(this.app, this.plugin.skillLoader, skill.id, this.plugin.settings.language).open();
+				}));
+		}
+	}
+
+	onClose(): void {
+		const { contentEl } = this;
+		contentEl.empty();
+	}
 }
 
 /**
@@ -1229,6 +1992,194 @@ class AgentPersonalizationModal extends Modal {
 			this.onSave();
 			this.close();
 		});
+	}
+
+	onClose(): void {
+		const { contentEl } = this;
+		contentEl.empty();
+	}
+}
+
+/**
+ * Modal with Node.js installation instructions for specific OS
+ */
+class NodeInstallModal extends Modal {
+	private plugin: CrystalPlugin;
+	private os: "macos" | "windows" | "linux";
+
+	private get locale(): SettingsLocale {
+		return getSettingsLocale(this.plugin.settings.language);
+	}
+
+	constructor(app: App, plugin: CrystalPlugin, os: "macos" | "windows" | "linux") {
+		super(app);
+		this.plugin = plugin;
+		this.os = os;
+	}
+
+	onOpen(): void {
+		const { contentEl } = this;
+		contentEl.empty();
+		contentEl.addClass("crystal-node-install-modal");
+
+		switch (this.os) {
+			case "macos":
+				this.renderMacOSInstructions(contentEl);
+				break;
+			case "windows":
+				this.renderWindowsInstructions(contentEl);
+				break;
+			case "linux":
+				this.renderLinuxInstructions(contentEl);
+				break;
+		}
+	}
+
+	private renderMacOSInstructions(el: HTMLElement): void {
+		el.createEl("h2", { text: this.locale.nodeInstallMacOS || "Install Node.js on macOS" });
+
+		// Option 1: Homebrew (recommended)
+		const option1 = el.createDiv({ cls: "crystal-install-option" });
+		option1.createEl("h4", { text: this.locale.homebrewRecommended || "Homebrew (recommended)" });
+
+		const step1 = option1.createDiv({ cls: "crystal-install-step" });
+		step1.createEl("span", { text: "1. Install Homebrew (if not installed):" });
+		step1.createEl("code", {
+			cls: "crystal-install-command",
+			text: '/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
+		});
+
+		const step2 = option1.createDiv({ cls: "crystal-install-step" });
+		step2.createEl("span", { text: "2. Install Node.js:" });
+		step2.createEl("code", {
+			cls: "crystal-install-command",
+			text: "brew install node"
+		});
+
+		// Quick install button
+		const quickInstall = option1.createDiv({ cls: "crystal-quick-install" });
+		const installBtn = quickInstall.createEl("button", { cls: "mod-cta" });
+		const termIcon = installBtn.createSpan({ cls: "crystal-btn-icon-left" });
+		setIcon(termIcon, "terminal");
+		installBtn.createSpan({ text: this.locale.installViaTerminal || "Install via Terminal" });
+
+		installBtn.addEventListener("click", () => {
+			this.plugin.openInSystemTerminal("brew install node && echo '✅ Node.js installed!' && node --version");
+			this.close();
+		});
+
+		// Option 2: Official installer
+		const option2 = el.createDiv({ cls: "crystal-install-option" });
+		option2.createEl("h4", { text: this.locale.officialInstaller || "Official Installer" });
+
+		const linkContainer = option2.createDiv({ cls: "crystal-install-step" });
+		const link = linkContainer.createEl("a", {
+			text: "Download from nodejs.org →",
+			href: "https://nodejs.org/en/download/"
+		});
+		link.setAttr("target", "_blank");
+
+		// Close button
+		const buttonContainer = el.createDiv({ cls: "crystal-modal-buttons" });
+		const closeBtn = buttonContainer.createEl("button", { text: this.locale.closeButton || "Close" });
+		closeBtn.addEventListener("click", () => this.close());
+	}
+
+	private renderWindowsInstructions(el: HTMLElement): void {
+		el.createEl("h2", { text: this.locale.nodeInstallWindows || "Install Node.js on Windows" });
+
+		// Option 1: Official installer
+		const option1 = el.createDiv({ cls: "crystal-install-option" });
+		option1.createEl("h4", { text: this.locale.officialInstaller || "Official Installer (Recommended)" });
+
+		option1.createEl("p", {
+			text: "Download and run the Windows installer from the official website:",
+			cls: "crystal-settings-note"
+		});
+
+		const linkContainer1 = option1.createDiv({ cls: "crystal-install-step" });
+		const link1 = linkContainer1.createEl("a", {
+			text: "nodejs.org/en/download →",
+			href: "https://nodejs.org/en/download/"
+		});
+		link1.setAttr("target", "_blank");
+
+		// Option 2: Chocolatey
+		const option2 = el.createDiv({ cls: "crystal-install-option" });
+		option2.createEl("h4", { text: "Chocolatey" });
+
+		option2.createEl("span", { text: this.locale.orUsePackageManager || "Or use a package manager:" });
+		option2.createEl("code", {
+			cls: "crystal-install-command",
+			text: "choco install nodejs"
+		});
+
+		// Option 3: winget
+		const option3 = el.createDiv({ cls: "crystal-install-option" });
+		option3.createEl("h4", { text: "winget" });
+
+		option3.createEl("span", { text: "Using Windows Package Manager:" });
+		option3.createEl("code", {
+			cls: "crystal-install-command",
+			text: "winget install OpenJS.NodeJS"
+		});
+
+		// Close button
+		const buttonContainer = el.createDiv({ cls: "crystal-modal-buttons" });
+		const closeBtn = buttonContainer.createEl("button", { text: this.locale.closeButton || "Close" });
+		closeBtn.addEventListener("click", () => this.close());
+	}
+
+	private renderLinuxInstructions(el: HTMLElement): void {
+		el.createEl("h2", { text: this.locale.nodeInstallLinux || "Install Node.js on Linux" });
+
+		// Ubuntu/Debian
+		const option1 = el.createDiv({ cls: "crystal-install-option" });
+		option1.createEl("h4", { text: "Ubuntu / Debian" });
+		option1.createEl("code", {
+			cls: "crystal-install-command",
+			text: "sudo apt update && sudo apt install nodejs npm"
+		});
+
+		// Fedora
+		const option2 = el.createDiv({ cls: "crystal-install-option" });
+		option2.createEl("h4", { text: "Fedora" });
+		option2.createEl("code", {
+			cls: "crystal-install-command",
+			text: "sudo dnf install nodejs npm"
+		});
+
+		// Arch
+		const option3 = el.createDiv({ cls: "crystal-install-option" });
+		option3.createEl("h4", { text: "Arch Linux" });
+		option3.createEl("code", {
+			cls: "crystal-install-command",
+			text: "sudo pacman -S nodejs npm"
+		});
+
+		// NVM (universal)
+		const option4 = el.createDiv({ cls: "crystal-install-option crystal-install-option-recommended" });
+		option4.createEl("h4", { text: "NVM (Node Version Manager) — Recommended" });
+		option4.createEl("code", {
+			cls: "crystal-install-command",
+			text: "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.0/install.sh | bash"
+		});
+		option4.createEl("p", {
+			cls: "crystal-settings-note",
+			text: "Then restart terminal and run: nvm install --lts"
+		});
+
+		const linkContainer = option4.createDiv({ cls: "crystal-install-step" });
+		const link = linkContainer.createEl("a", {
+			text: "More info: github.com/nvm-sh/nvm →",
+			href: "https://github.com/nvm-sh/nvm"
+		});
+		link.setAttr("target", "_blank");
+
+		// Close button
+		const buttonContainer = el.createDiv({ cls: "crystal-modal-buttons" });
+		const closeBtn = buttonContainer.createEl("button", { text: this.locale.closeButton || "Close" });
+		closeBtn.addEventListener("click", () => this.close());
 	}
 
 	onClose(): void {

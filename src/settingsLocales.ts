@@ -147,6 +147,17 @@ export interface SettingsLocale {
 	installWith: string;
 	refreshButton: string;
 
+	// Node.js Installation
+	nodeRequired: string;
+	nodeRequiredDesc: string;
+	installViaTerminal: string;
+	nodeInstallMacOS: string;
+	nodeInstallWindows: string;
+	nodeInstallLinux: string;
+	homebrewRecommended: string;
+	officialInstaller: string;
+	orUsePackageManager: string;
+
 	// Command Modal
 	editCommand: string;
 	newCustomCommand: string;
@@ -242,6 +253,21 @@ export interface SettingsLocale {
 	personalizationConfigured: string;
 	personalizationNotConfigured: string;
 	clearAllButton: string;
+
+	// Settings restructure - new sections
+	agentSection: string;
+	commandsAndSkills: string;
+	commandsCount: string;
+	skillsCount: string;
+	manageCommands: string;
+	manageCommandsDesc: string;
+	manageSkills: string;
+	manageSkillsDesc: string;
+	personalizationDesc: string;
+	commandsModalTitle: string;
+	skillsModalTitle: string;
+	permissionsSection: string;
+	cliStatusSection: string;
 }
 
 export const SETTINGS_LOCALES: Record<LanguageCode, SettingsLocale> = {
@@ -392,6 +418,17 @@ export const SETTINGS_LOCALES: Record<LanguageCode, SettingsLocale> = {
 		installWith: "Установите: npm i -g @anthropic-ai/claude-code",
 		refreshButton: "Обновить",
 
+		// Node.js Installation
+		nodeRequired: "Требуется Node.js",
+		nodeRequiredDesc: "Для установки Claude Code необходим Node.js. Выберите вашу операционную систему:",
+		installViaTerminal: "Установить через терминал",
+		nodeInstallMacOS: "Установка Node.js на macOS",
+		nodeInstallWindows: "Установка Node.js на Windows",
+		nodeInstallLinux: "Установка Node.js на Linux",
+		homebrewRecommended: "Homebrew (рекомендуется)",
+		officialInstaller: "Официальный установщик",
+		orUsePackageManager: "Или используйте менеджер пакетов:",
+
 		// Command Modal
 		editCommand: "Редактировать команду",
 		newCustomCommand: "Новая команда",
@@ -484,7 +521,22 @@ export const SETTINGS_LOCALES: Record<LanguageCode, SettingsLocale> = {
 		personalizationCurrentFocusPlaceholder: "Например: Редизайн мобильного приложения",
 		personalizationConfigured: "Настроено",
 		personalizationNotConfigured: "Настроить...",
-		clearAllButton: "Очистить всё"
+		clearAllButton: "Очистить всё",
+
+		// Settings restructure
+		agentSection: "Агент",
+		commandsAndSkills: "Команды и навыки",
+		commandsCount: "команд",
+		skillsCount: "навыков",
+		manageCommands: "Команды",
+		manageCommandsDesc: "Включайте и отключайте слеш-команды",
+		manageSkills: "Навыки",
+		manageSkillsDesc: "Настройте специализации агента",
+		personalizationDesc: "Настройте стиль общения",
+		commandsModalTitle: "Команды",
+		skillsModalTitle: "Навыки",
+		permissionsSection: "Разрешения",
+		cliStatusSection: "Статус CLI"
 	},
 
 	en: {
@@ -634,6 +686,17 @@ export const SETTINGS_LOCALES: Record<LanguageCode, SettingsLocale> = {
 		installWith: "Install with: npm i -g @anthropic-ai/claude-code",
 		refreshButton: "Refresh",
 
+		// Node.js Installation
+		nodeRequired: "Node.js required",
+		nodeRequiredDesc: "Claude Code requires Node.js to be installed. Choose your operating system:",
+		installViaTerminal: "Install via Terminal",
+		nodeInstallMacOS: "Install Node.js on macOS",
+		nodeInstallWindows: "Install Node.js on Windows",
+		nodeInstallLinux: "Install Node.js on Linux",
+		homebrewRecommended: "Homebrew (recommended)",
+		officialInstaller: "Official Installer",
+		orUsePackageManager: "Or use a package manager:",
+
 		// Command Modal
 		editCommand: "Edit Command",
 		newCustomCommand: "New Custom Command",
@@ -726,7 +789,22 @@ export const SETTINGS_LOCALES: Record<LanguageCode, SettingsLocale> = {
 		personalizationCurrentFocusPlaceholder: "e.g., Mobile app redesign",
 		personalizationConfigured: "Configured",
 		personalizationNotConfigured: "Configure...",
-		clearAllButton: "Clear all"
+		clearAllButton: "Clear all",
+
+		// Settings restructure
+		agentSection: "Agent",
+		commandsAndSkills: "Commands & Skills",
+		commandsCount: "commands",
+		skillsCount: "skills",
+		manageCommands: "Commands",
+		manageCommandsDesc: "Enable and disable slash commands",
+		manageSkills: "Skills",
+		manageSkillsDesc: "Configure agent specializations",
+		personalizationDesc: "Customize communication style",
+		commandsModalTitle: "Commands",
+		skillsModalTitle: "Skills",
+		permissionsSection: "Permissions",
+		cliStatusSection: "CLI Status"
 	},
 
 	fr: {
@@ -876,6 +954,17 @@ export const SETTINGS_LOCALES: Record<LanguageCode, SettingsLocale> = {
 		installWith: "Installer avec: npm i -g @anthropic-ai/claude-code",
 		refreshButton: "Actualiser",
 
+		// Node.js Installation
+		nodeRequired: "Node.js requis",
+		nodeRequiredDesc: "Claude Code nécessite Node.js. Choisissez votre système d'exploitation:",
+		installViaTerminal: "Installer via Terminal",
+		nodeInstallMacOS: "Installer Node.js sur macOS",
+		nodeInstallWindows: "Installer Node.js sur Windows",
+		nodeInstallLinux: "Installer Node.js sur Linux",
+		homebrewRecommended: "Homebrew (recommandé)",
+		officialInstaller: "Installateur officiel",
+		orUsePackageManager: "Ou utilisez un gestionnaire de paquets:",
+
 		// Command Modal
 		editCommand: "Modifier la commande",
 		newCustomCommand: "Nouvelle commande personnalisée",
@@ -968,7 +1057,22 @@ export const SETTINGS_LOCALES: Record<LanguageCode, SettingsLocale> = {
 		personalizationCurrentFocusPlaceholder: "ex: Refonte de l'application mobile",
 		personalizationConfigured: "Configuré",
 		personalizationNotConfigured: "Configurer...",
-		clearAllButton: "Tout effacer"
+		clearAllButton: "Tout effacer",
+
+		// Settings restructure
+		agentSection: "Agent",
+		commandsAndSkills: "Commandes et compétences",
+		commandsCount: "commandes",
+		skillsCount: "compétences",
+		manageCommands: "Commandes",
+		manageCommandsDesc: "Activer et désactiver les commandes",
+		manageSkills: "Compétences",
+		manageSkillsDesc: "Configurer les spécialisations",
+		personalizationDesc: "Personnaliser le style de communication",
+		commandsModalTitle: "Commandes",
+		skillsModalTitle: "Compétences",
+		permissionsSection: "Autorisations",
+		cliStatusSection: "Statut CLI"
 	},
 
 	de: {
@@ -1118,6 +1222,17 @@ export const SETTINGS_LOCALES: Record<LanguageCode, SettingsLocale> = {
 		installWith: "Installieren mit: npm i -g @anthropic-ai/claude-code",
 		refreshButton: "Aktualisieren",
 
+		// Node.js Installation
+		nodeRequired: "Node.js erforderlich",
+		nodeRequiredDesc: "Claude Code erfordert Node.js. Wählen Sie Ihr Betriebssystem:",
+		installViaTerminal: "Über Terminal installieren",
+		nodeInstallMacOS: "Node.js auf macOS installieren",
+		nodeInstallWindows: "Node.js auf Windows installieren",
+		nodeInstallLinux: "Node.js auf Linux installieren",
+		homebrewRecommended: "Homebrew (empfohlen)",
+		officialInstaller: "Offizieller Installer",
+		orUsePackageManager: "Oder verwenden Sie einen Paketmanager:",
+
 		// Command Modal
 		editCommand: "Befehl bearbeiten",
 		newCustomCommand: "Neuer benutzerdefinierter Befehl",
@@ -1210,7 +1325,22 @@ export const SETTINGS_LOCALES: Record<LanguageCode, SettingsLocale> = {
 		personalizationCurrentFocusPlaceholder: "z.B.: Neugestaltung der mobilen App",
 		personalizationConfigured: "Konfiguriert",
 		personalizationNotConfigured: "Konfigurieren...",
-		clearAllButton: "Alles löschen"
+		clearAllButton: "Alles löschen",
+
+		// Settings restructure
+		agentSection: "Agent",
+		commandsAndSkills: "Befehle & Fähigkeiten",
+		commandsCount: "Befehle",
+		skillsCount: "Fähigkeiten",
+		manageCommands: "Befehle",
+		manageCommandsDesc: "Befehle aktivieren und deaktivieren",
+		manageSkills: "Fähigkeiten",
+		manageSkillsDesc: "Agent-Spezialisierungen konfigurieren",
+		personalizationDesc: "Kommunikationsstil anpassen",
+		commandsModalTitle: "Befehle",
+		skillsModalTitle: "Fähigkeiten",
+		permissionsSection: "Berechtigungen",
+		cliStatusSection: "CLI-Status"
 	},
 
 	es: {
@@ -1360,6 +1490,17 @@ export const SETTINGS_LOCALES: Record<LanguageCode, SettingsLocale> = {
 		installWith: "Instalar con: npm i -g @anthropic-ai/claude-code",
 		refreshButton: "Actualizar",
 
+		// Node.js Installation
+		nodeRequired: "Se requiere Node.js",
+		nodeRequiredDesc: "Claude Code requiere Node.js. Elige tu sistema operativo:",
+		installViaTerminal: "Instalar vía Terminal",
+		nodeInstallMacOS: "Instalar Node.js en macOS",
+		nodeInstallWindows: "Instalar Node.js en Windows",
+		nodeInstallLinux: "Instalar Node.js en Linux",
+		homebrewRecommended: "Homebrew (recomendado)",
+		officialInstaller: "Instalador oficial",
+		orUsePackageManager: "O usa un gestor de paquetes:",
+
 		// Command Modal
 		editCommand: "Editar comando",
 		newCustomCommand: "Nuevo comando personalizado",
@@ -1454,7 +1595,22 @@ export const SETTINGS_LOCALES: Record<LanguageCode, SettingsLocale> = {
 		personalizationCurrentFocusPlaceholder: "ej: Rediseño de la app móvil",
 		personalizationConfigured: "Configurado",
 		personalizationNotConfigured: "Configurar...",
-		clearAllButton: "Borrar todo"
+		clearAllButton: "Borrar todo",
+
+		// Settings restructure
+		agentSection: "Agente",
+		commandsAndSkills: "Comandos y habilidades",
+		commandsCount: "comandos",
+		skillsCount: "habilidades",
+		manageCommands: "Comandos",
+		manageCommandsDesc: "Activar y desactivar comandos",
+		manageSkills: "Habilidades",
+		manageSkillsDesc: "Configurar especializaciones del agente",
+		personalizationDesc: "Personalizar estilo de comunicación",
+		commandsModalTitle: "Comandos",
+		skillsModalTitle: "Habilidades",
+		permissionsSection: "Permisos",
+		cliStatusSection: "Estado CLI"
 	},
 
 	hi: {
@@ -1604,6 +1760,17 @@ export const SETTINGS_LOCALES: Record<LanguageCode, SettingsLocale> = {
 		installWith: "इंस्टॉल करें: npm i -g @anthropic-ai/claude-code",
 		refreshButton: "रिफ्रेश",
 
+		// Node.js Installation
+		nodeRequired: "Node.js आवश्यक है",
+		nodeRequiredDesc: "Claude Code के लिए Node.js आवश्यक है। अपना ऑपरेटिंग सिस्टम चुनें:",
+		installViaTerminal: "टर्मिनल से इंस्टॉल करें",
+		nodeInstallMacOS: "macOS पर Node.js इंस्टॉल करें",
+		nodeInstallWindows: "Windows पर Node.js इंस्टॉल करें",
+		nodeInstallLinux: "Linux पर Node.js इंस्टॉल करें",
+		homebrewRecommended: "Homebrew (अनुशंसित)",
+		officialInstaller: "आधिकारिक इंस्टॉलर",
+		orUsePackageManager: "या पैकेज मैनेजर का उपयोग करें:",
+
 		// Command Modal
 		editCommand: "कमांड संपादित करें",
 		newCustomCommand: "नया कस्टम कमांड",
@@ -1698,7 +1865,22 @@ export const SETTINGS_LOCALES: Record<LanguageCode, SettingsLocale> = {
 		personalizationCurrentFocusPlaceholder: "जैसे: मोबाइल ऐप का रीडिज़ाइन",
 		personalizationConfigured: "कॉन्फ़िगर किया गया",
 		personalizationNotConfigured: "कॉन्फ़िगर करें...",
-		clearAllButton: "सब मिटाएं"
+		clearAllButton: "सब मिटाएं",
+
+		// Settings restructure
+		agentSection: "एजेंट",
+		commandsAndSkills: "कमांड और स्किल",
+		commandsCount: "कमांड",
+		skillsCount: "स्किल",
+		manageCommands: "कमांड",
+		manageCommandsDesc: "कमांड सक्षम और अक्षम करें",
+		manageSkills: "स्किल",
+		manageSkillsDesc: "एजेंट विशेषज्ञता कॉन्फ़िगर करें",
+		personalizationDesc: "संचार शैली अनुकूलित करें",
+		commandsModalTitle: "कमांड",
+		skillsModalTitle: "स्किल",
+		permissionsSection: "अनुमतियाँ",
+		cliStatusSection: "CLI स्थिति"
 	},
 
 	zh: {
@@ -1848,6 +2030,17 @@ export const SETTINGS_LOCALES: Record<LanguageCode, SettingsLocale> = {
 		installWith: "安装命令：npm i -g @anthropic-ai/claude-code",
 		refreshButton: "刷新",
 
+		// Node.js Installation
+		nodeRequired: "需要 Node.js",
+		nodeRequiredDesc: "Claude Code 需要安装 Node.js。请选择您的操作系统：",
+		installViaTerminal: "通过终端安装",
+		nodeInstallMacOS: "在 macOS 上安装 Node.js",
+		nodeInstallWindows: "在 Windows 上安装 Node.js",
+		nodeInstallLinux: "在 Linux 上安装 Node.js",
+		homebrewRecommended: "Homebrew（推荐）",
+		officialInstaller: "官方安装程序",
+		orUsePackageManager: "或使用包管理器：",
+
 		// Command Modal
 		editCommand: "编辑命令",
 		newCustomCommand: "新建自定义命令",
@@ -1942,7 +2135,22 @@ export const SETTINGS_LOCALES: Record<LanguageCode, SettingsLocale> = {
 		personalizationCurrentFocusPlaceholder: "例如：移动应用重新设计",
 		personalizationConfigured: "已配置",
 		personalizationNotConfigured: "配置...",
-		clearAllButton: "清除全部"
+		clearAllButton: "清除全部",
+
+		// Settings restructure
+		agentSection: "代理",
+		commandsAndSkills: "命令和技能",
+		commandsCount: "个命令",
+		skillsCount: "个技能",
+		manageCommands: "命令",
+		manageCommandsDesc: "启用和禁用命令",
+		manageSkills: "技能",
+		manageSkillsDesc: "配置代理专业化",
+		personalizationDesc: "自定义沟通风格",
+		commandsModalTitle: "命令",
+		skillsModalTitle: "技能",
+		permissionsSection: "权限",
+		cliStatusSection: "CLI 状态"
 	},
 
 	ja: {
@@ -2092,6 +2300,17 @@ export const SETTINGS_LOCALES: Record<LanguageCode, SettingsLocale> = {
 		installWith: "インストール：npm i -g @anthropic-ai/claude-code",
 		refreshButton: "更新",
 
+		// Node.js Installation
+		nodeRequired: "Node.js が必要です",
+		nodeRequiredDesc: "Claude Code には Node.js が必要です。オペレーティングシステムを選択してください：",
+		installViaTerminal: "ターミナルからインストール",
+		nodeInstallMacOS: "macOS に Node.js をインストール",
+		nodeInstallWindows: "Windows に Node.js をインストール",
+		nodeInstallLinux: "Linux に Node.js をインストール",
+		homebrewRecommended: "Homebrew（推奨）",
+		officialInstaller: "公式インストーラー",
+		orUsePackageManager: "またはパッケージマネージャーを使用：",
+
 		// Command Modal
 		editCommand: "コマンドを編集",
 		newCustomCommand: "新しいカスタムコマンド",
@@ -2186,7 +2405,22 @@ export const SETTINGS_LOCALES: Record<LanguageCode, SettingsLocale> = {
 		personalizationCurrentFocusPlaceholder: "例：モバイルアプリのリデザイン",
 		personalizationConfigured: "設定済み",
 		personalizationNotConfigured: "設定する...",
-		clearAllButton: "すべてクリア"
+		clearAllButton: "すべてクリア",
+
+		// Settings restructure
+		agentSection: "エージェント",
+		commandsAndSkills: "コマンドとスキル",
+		commandsCount: "コマンド",
+		skillsCount: "スキル",
+		manageCommands: "コマンド",
+		manageCommandsDesc: "コマンドの有効/無効を切り替え",
+		manageSkills: "スキル",
+		manageSkillsDesc: "エージェントの専門分野を設定",
+		personalizationDesc: "コミュニケーションスタイルをカスタマイズ",
+		commandsModalTitle: "コマンド",
+		skillsModalTitle: "スキル",
+		permissionsSection: "権限",
+		cliStatusSection: "CLI ステータス"
 	}
 };
 

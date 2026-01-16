@@ -15,6 +15,12 @@ export interface CLIStatusResult {
 	error?: string;
 }
 
+export interface NodeStatusResult {
+	installed: boolean;
+	version?: string;
+	error?: string;
+}
+
 /**
  * Returns candidate paths to check based on OS
  */
@@ -178,6 +184,61 @@ export async function checkCLIInstalled(cliPath: string): Promise<CLIStatusResul
 			resolve({
 				installed: false,
 				error: err.message
+			});
+		});
+	});
+}
+
+/**
+ * Checks if Node.js is installed and returns version (async)
+ */
+export async function checkNodeInstalled(): Promise<NodeStatusResult> {
+	return new Promise((resolve) => {
+		const pathAdditions = ["/usr/local/bin", "/opt/homebrew/bin", "/usr/bin", "/bin"];
+		const homeDir = process.env.HOME || os.homedir();
+		const env = {
+			...process.env,
+			PATH: pathAdditions.join(":") + ":" + (process.env.PATH || ""),
+			HOME: homeDir,
+		};
+
+		const proc = spawn("node", ["--version"], {
+			timeout: 10000,
+			stdio: ["pipe", "pipe", "pipe"],
+			env
+		});
+
+		let stdout = "";
+		let stderr = "";
+
+		proc.stdout?.on("data", (data) => {
+			stdout += data.toString();
+		});
+
+		proc.stderr?.on("data", (data) => {
+			stderr += data.toString();
+		});
+
+		proc.on("close", (code) => {
+			if (code === 0 && stdout.trim()) {
+				// Extract version from output (e.g., "v20.10.0")
+				const versionMatch = stdout.trim().match(/v?(\d+\.\d+\.\d+)/);
+				resolve({
+					installed: true,
+					version: versionMatch ? versionMatch[1] : stdout.trim()
+				});
+			} else {
+				resolve({
+					installed: false,
+					error: stderr.trim() || "Node.js not found"
+				});
+			}
+		});
+
+		proc.on("error", () => {
+			resolve({
+				installed: false,
+				error: "Node.js not installed"
 			});
 		});
 	});

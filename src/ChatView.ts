@@ -20,6 +20,11 @@ export class CrystalChatView extends ItemView {
 	private messages: ChatMessage[] = [];
 	private currentAssistantMessage: HTMLElement | null = null;
 	private currentAssistantContent: string = "";
+	private renderedTextContent: string = "";
+	private lastRenderedWordCount: number = 0;
+	private wordQueue: string[] = [];
+	private wordRenderTimer: ReturnType<typeof setInterval> | null = null;
+	private pendingFinalization: boolean = false;
 	private isGenerating: boolean = false;
 	private activeSessionId: string | null = null;  // ID of currently active session
 	private contextDisabled: boolean = false;  // User manually removed context
@@ -101,7 +106,13 @@ export class CrystalChatView extends ItemView {
 	private currentReasoningGroup: { tools: ToolUseBlock[]; element: HTMLElement | null } | null = null;
 
 	// Tool steps group (all non-thinking tools in one collapsible container)
-	private currentToolStepsGroup: { tools: ToolUseBlock[]; element: HTMLElement | null; contentEl: HTMLElement | null } | null = null;
+	private currentToolStepsGroup: {
+		tools: ToolUseBlock[];
+		element: HTMLElement | null;
+		contentEl: HTMLElement | null;
+		iconEl: HTMLElement | null;
+		titleEl: HTMLElement | null;
+	} | null = null;
 
 	// Global expand/collapse state for all reasoning and tool groups
 	private reasoningGroupsExpanded: boolean = true;
@@ -986,6 +997,11 @@ Provide only the summary, no additional commentary.`;
 	}
 
 	private handleSendButtonClick(): void {
+		// Block sending while words are still being rendered
+		if (this.wordQueue.length > 0 || this.wordRenderTimer || this.pendingFinalization) {
+			return;
+		}
+
 		if (this.isGenerating) {
 			// Stop generation for current session
 			const currentSession = this.plugin.getCurrentSession();
@@ -1142,8 +1158,10 @@ Provide only the summary, no additional commentary.`;
 
 		const header = thinkingBlock.createDiv({ cls: "crystal-thinking-header" });
 		const iconEl = header.createSpan({ cls: "crystal-thinking-icon" });
-		setIcon(iconEl, "brain");
-		header.createSpan({ cls: "crystal-thinking-text", text: locale.thinking });
+		setIcon(iconEl, "sparkles");
+		// Random thinking variation
+		const randomText = locale.thinkingVariations[Math.floor(Math.random() * locale.thinkingVariations.length)];
+		header.createSpan({ cls: "crystal-thinking-text", text: randomText });
 
 		const stepsContainer = thinkingBlock.createDiv({ cls: "crystal-thinking-steps" });
 
@@ -2163,11 +2181,13 @@ Provide only the summary, no additional commentary.`;
 			cls: "crystal-thinking-block"
 		});
 
-		// Header with "Thinking..." text
+		// Header with random thinking variation
 		const header = this.currentThinkingBlock.createDiv({ cls: "crystal-thinking-header" });
 		const iconEl = header.createSpan({ cls: "crystal-thinking-icon" });
-		setIcon(iconEl, "brain");
-		header.createSpan({ cls: "crystal-thinking-text", text: locale.thinking });
+		setIcon(iconEl, "sparkles");
+		// Random thinking variation
+		const randomText = locale.thinkingVariations[Math.floor(Math.random() * locale.thinkingVariations.length)];
+		header.createSpan({ cls: "crystal-thinking-text", text: randomText });
 
 		// Steps container
 		this.currentThinkingSteps = this.currentThinkingBlock.createDiv({ cls: "crystal-thinking-steps" });
@@ -2182,16 +2202,47 @@ Provide only the summary, no additional commentary.`;
 			}
 			this.hasReceivedText = true;
 			this.createStreamingTextElement();
+			this.lastRenderedWordCount = 0;
+			this.renderedTextContent = "";
 		}
 
 		if (!this.currentAssistantMessage) return;
 
 		this.currentAssistantContent = fullText;
 
-		// During streaming: show plain text inside thinking block style
-		this.currentAssistantMessage.setText(fullText);
+		// Animated word-by-word rendering
+		this.renderAnimatedText(fullText);
 
 		this.scrollToBottom();
+	}
+
+	private renderAnimatedText(fullText: string): void {
+		if (!this.currentAssistantMessage) return;
+
+		// Render full text immediately (instant display)
+		this.renderedTextContent = fullText;
+		this.currentAssistantMessage.empty();
+
+		MarkdownRenderer.render(
+			this.app,
+			fullText,
+			this.currentAssistantMessage,
+			"",
+			this
+		);
+	}
+
+	private stopWordRenderer(): void {
+		if (this.wordRenderTimer) {
+			clearInterval(this.wordRenderTimer);
+			this.wordRenderTimer = null;
+		}
+	}
+
+	private flushWordQueue(): void {
+		// Legacy cleanup - now just stops timer
+		this.wordQueue = [];
+		this.stopWordRenderer();
 	}
 
 	// Save current tool steps as a separate message (for grouping)
@@ -2214,11 +2265,17 @@ Provide only the summary, no additional commentary.`;
 	private saveTextAsMessage(): void {
 		if (!this.currentAssistantContent.trim()) return;
 
+		// Flush any remaining words in queue before removing element
+		this.flushWordQueue();
+
 		// Remove streaming text element
 		if (this.currentAssistantMessage) {
 			this.currentAssistantMessage.remove();
 			this.currentAssistantMessage = null;
 		}
+		this.lastRenderedWordCount = 0;
+		this.wordQueue = [];
+		this.renderedTextContent = "";
 
 		// Capture selection context before it gets cleared
 		const selectionContext = this.lastSelectionContext ? { ...this.lastSelectionContext } : undefined;
@@ -2284,6 +2341,16 @@ Provide only the summary, no additional commentary.`;
 	}
 
 	private finalizeAssistantMessage(): void {
+		this.doFinalizeAssistantMessage();
+	}
+
+	private doFinalizeAssistantMessage(): void {
+		this.pendingFinalization = false;
+		this.stopWordRenderer();
+		this.wordQueue = [];
+		this.lastRenderedWordCount = 0;
+		this.renderedTextContent = "";
+
 		// Remove streaming text element (it was temporary)
 		if (this.currentAssistantMessage) {
 			this.currentAssistantMessage.remove();
@@ -2571,6 +2638,37 @@ Provide only the summary, no additional commentary.`;
 	}
 
 	/**
+	 * Gets dynamic action label and icon based on tool type
+	 */
+	private getActionLabel(toolType: string, locale: ButtonLocale): { icon: string; text: string } {
+		const mapping: Record<string, { icon: string; key: keyof typeof locale.actionLabels }> = {
+			"search": { icon: "search", key: "search" },
+			"Grep": { icon: "search", key: "search" },
+			"read": { icon: "file-text", key: "read" },
+			"file_read": { icon: "file-text", key: "read" },
+			"Read": { icon: "file-text", key: "read" },
+			"edit": { icon: "edit", key: "edit" },
+			"Edit": { icon: "edit", key: "edit" },
+			"file_write": { icon: "file-plus", key: "write" },
+			"Write": { icon: "file-plus", key: "write" },
+			"find": { icon: "folder-search", key: "find" },
+			"Glob": { icon: "folder-search", key: "find" },
+			"command": { icon: "terminal", key: "command" },
+			"script": { icon: "terminal", key: "command" },
+			"Bash": { icon: "terminal", key: "command" },
+			"web_search": { icon: "globe", key: "web" },
+			"WebSearch": { icon: "globe", key: "web" },
+			"WebFetch": { icon: "globe", key: "web" },
+		};
+
+		const config = mapping[toolType] || { icon: "brain", key: "thinking" as keyof typeof locale.actionLabels };
+		const labels = locale.actionLabels[config.key];
+		const randomIndex = Math.random() < 0.5 ? 0 : 1;
+
+		return { icon: config.icon, text: labels[randomIndex] };
+	}
+
+	/**
 	 * Resets grouping state (call when response finishes or context changes)
 	 */
 	private resetToolGrouping(): void {
@@ -2628,6 +2726,10 @@ Provide only the summary, no additional commentary.`;
 	private addToolToStepsGroup(tool: ToolUseBlock, locale: ButtonLocale): void {
 		if (!this.currentThinkingSteps) return;
 
+		// Get action label for current tool
+		const toolType = this.getToolGroupType(tool);
+		const actionLabel = this.getActionLabel(toolType, locale);
+
 		// Create new group if needed
 		if (!this.currentToolStepsGroup) {
 			// Create the group container (same style as reasoning groups)
@@ -2636,10 +2738,10 @@ Provide only the summary, no additional commentary.`;
 			// Group header (clickable to expand/collapse)
 			const headerEl = groupEl.createDiv({ cls: "crystal-reasoning-group-header" });
 			const iconEl = headerEl.createSpan({ cls: "crystal-reasoning-icon" });
-			setIcon(iconEl, "brain");
+			setIcon(iconEl, actionLabel.icon);
 
 			const titleEl = headerEl.createSpan({ cls: "crystal-reasoning-group-title" });
-			titleEl.setText(locale.thinking || "Думает...");
+			titleEl.setText(actionLabel.text);
 
 			const counterEl = headerEl.createSpan({ cls: "crystal-reasoning-group-counter" });
 			counterEl.style.display = "none";
@@ -2674,7 +2776,7 @@ Provide only the summary, no additional commentary.`;
 				setIcon(expandEl, "chevron-down");
 			}
 
-			this.currentToolStepsGroup = { tools: [tool], element: groupEl, contentEl };
+			this.currentToolStepsGroup = { tools: [tool], element: groupEl, contentEl, iconEl, titleEl };
 
 			// Add first tool step
 			this.addToolStepToContent(contentEl, tool, locale);
@@ -2684,6 +2786,15 @@ Provide only the summary, no additional commentary.`;
 		// Add to existing group
 		this.currentToolStepsGroup.tools.push(tool);
 		const count = this.currentToolStepsGroup.tools.length;
+
+		// Update header with new action label (based on last tool)
+		if (this.currentToolStepsGroup.iconEl) {
+			this.currentToolStepsGroup.iconEl.empty();
+			setIcon(this.currentToolStepsGroup.iconEl, actionLabel.icon);
+		}
+		if (this.currentToolStepsGroup.titleEl) {
+			this.currentToolStepsGroup.titleEl.setText(actionLabel.text);
+		}
 
 		// Update counter
 		const counterEl = this.currentToolStepsGroup.element?.querySelector(".crystal-reasoning-group-counter") as HTMLElement;

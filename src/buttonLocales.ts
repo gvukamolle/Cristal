@@ -33,6 +33,7 @@ export interface ButtonLocale {
 	fetchingUrl: string;
 	usingTool: string;
 	thinking: string;
+	thinkingVariations: string[];
 	showFullReasoning: string;
 	thinkingDeeper: string;
 	deepReasoning: string;
@@ -84,6 +85,17 @@ export interface ButtonLocale {
 	// Button labels
 	thinkButton: string;
 	fileButton: string;
+	// Action labels for dynamic thinking header
+	actionLabels: {
+		search: [string, string];
+		read: [string, string];
+		edit: [string, string];
+		write: [string, string];
+		find: [string, string];
+		command: [string, string];
+		web: [string, string];
+		thinking: [string, string];
+	};
 }
 
 export const BUTTON_LOCALES: Record<LanguageCode, ButtonLocale> = {
@@ -117,6 +129,18 @@ export const BUTTON_LOCALES: Record<LanguageCode, ButtonLocale> = {
 		fetchingUrl: "Загружает URL",
 		usingTool: "Использует",
 		thinking: "Думает...",
+		thinkingVariations: [
+			"В процессе...",
+			"Колдую...",
+			"Мозгую...",
+			"Приступаю...",
+			"Обрабатываю...",
+			"Соображаю...",
+			"Анализирую...",
+			"Готовлю ответ...",
+			"Работаю...",
+			"Погружаюсь..."
+		],
 		showFullReasoning: "Показать полное рассуждение",
 		thinkingDeeper: "Думать глубже",
 		deepReasoning: "Глубокие рассуждения",
@@ -159,7 +183,17 @@ export const BUTTON_LOCALES: Record<LanguageCode, ButtonLocale> = {
 		unavailableAgentPlaceholder: "Агент недоступен...",
 		// Button labels
 		thinkButton: "Подумать",
-		fileButton: "Файл"
+		fileButton: "Файл",
+		actionLabels: {
+			search: ["Ищу...", "В поиске..."],
+			read: ["Читаю...", "Углубляюсь..."],
+			edit: ["Редактирую...", "Переписываю..."],
+			write: ["Пишу...", "Создаю..."],
+			find: ["Ищу файлы...", "Просматриваю..."],
+			command: ["Выполняю...", "Запускаю..."],
+			web: ["В сети...", "Загружаю..."],
+			thinking: ["Думаю...", "Размышляю..."]
+		}
 	},
 	en: {
 		copy: "Copy",
@@ -191,6 +225,18 @@ export const BUTTON_LOCALES: Record<LanguageCode, ButtonLocale> = {
 		fetchingUrl: "Fetching URL",
 		usingTool: "Using",
 		thinking: "Thinking...",
+		thinkingVariations: [
+			"Processing...",
+			"Working on it...",
+			"Analyzing...",
+			"Preparing...",
+			"Figuring out...",
+			"Computing...",
+			"Pondering...",
+			"Getting ready...",
+			"On it...",
+			"Diving in..."
+		],
 		showFullReasoning: "Show full reasoning",
 		thinkingDeeper: "Think deeper",
 		deepReasoning: "Deep reasoning",
@@ -233,7 +279,17 @@ export const BUTTON_LOCALES: Record<LanguageCode, ButtonLocale> = {
 		unavailableAgentPlaceholder: "Agent unavailable...",
 		// Button labels
 		thinkButton: "Think",
-		fileButton: "File"
+		fileButton: "File",
+		actionLabels: {
+			search: ["Searching...", "Looking for..."],
+			read: ["Reading...", "Diving in..."],
+			edit: ["Editing...", "Rewriting..."],
+			write: ["Writing...", "Creating..."],
+			find: ["Finding files...", "Browsing..."],
+			command: ["Executing...", "Running..."],
+			web: ["Searching web...", "Fetching..."],
+			thinking: ["Thinking...", "Pondering..."]
+		}
 	},
 	fr: {
 		copy: "Copier",
@@ -265,6 +321,18 @@ export const BUTTON_LOCALES: Record<LanguageCode, ButtonLocale> = {
 		fetchingUrl: "Récupération URL",
 		usingTool: "Utilisation de",
 		thinking: "Réflexion...",
+		thinkingVariations: [
+			"En cours...",
+			"Je travaille...",
+			"J'analyse...",
+			"Je prépare...",
+			"Je réfléchis...",
+			"Je calcule...",
+			"Je médite...",
+			"En préparation...",
+			"J'y suis...",
+			"Je plonge..."
+		],
 		showFullReasoning: "Afficher le raisonnement complet",
 		thinkingDeeper: "Réfléchir plus",
 		deepReasoning: "Raisonnement approfondi",
@@ -307,7 +375,17 @@ export const BUTTON_LOCALES: Record<LanguageCode, ButtonLocale> = {
 		unavailableAgentPlaceholder: "Agent indisponible...",
 		// Button labels
 		thinkButton: "Réfléchir",
-		fileButton: "Fichier"
+		fileButton: "Fichier",
+		actionLabels: {
+			search: ["Recherche...", "En recherche..."],
+			read: ["Lecture...", "Analyse..."],
+			edit: ["Modification...", "Réécriture..."],
+			write: ["Écriture...", "Création..."],
+			find: ["Recherche fichiers...", "Exploration..."],
+			command: ["Exécution...", "Lancement..."],
+			web: ["Recherche web...", "Chargement..."],
+			thinking: ["Réflexion...", "Méditation..."]
+		}
 	},
 	de: {
 		copy: "Kopieren",
@@ -339,6 +417,18 @@ export const BUTTON_LOCALES: Record<LanguageCode, ButtonLocale> = {
 		fetchingUrl: "Lade URL",
 		usingTool: "Verwende",
 		thinking: "Denke nach...",
+		thinkingVariations: [
+			"In Bearbeitung...",
+			"Arbeite daran...",
+			"Analysiere...",
+			"Bereite vor...",
+			"Überlege...",
+			"Berechne...",
+			"Grübele...",
+			"Mache mich bereit...",
+			"Bin dran...",
+			"Tauche ein..."
+		],
 		showFullReasoning: "Vollständiges Denken anzeigen",
 		thinkingDeeper: "Tiefer denken",
 		deepReasoning: "Tiefes Denken",
@@ -381,7 +471,17 @@ export const BUTTON_LOCALES: Record<LanguageCode, ButtonLocale> = {
 		unavailableAgentPlaceholder: "Agent nicht verfügbar...",
 		// Button labels
 		thinkButton: "Denken",
-		fileButton: "Datei"
+		fileButton: "Datei",
+		actionLabels: {
+			search: ["Suche...", "Durchsuche..."],
+			read: ["Lese...", "Vertiefe..."],
+			edit: ["Bearbeite...", "Schreibe um..."],
+			write: ["Schreibe...", "Erstelle..."],
+			find: ["Suche Dateien...", "Durchsuche..."],
+			command: ["Führe aus...", "Starte..."],
+			web: ["Web-Suche...", "Lade..."],
+			thinking: ["Denke...", "Überlege..."]
+		}
 	},
 	es: {
 		copy: "Copiar",
@@ -413,6 +513,18 @@ export const BUTTON_LOCALES: Record<LanguageCode, ButtonLocale> = {
 		fetchingUrl: "Obteniendo URL",
 		usingTool: "Usando",
 		thinking: "Pensando...",
+		thinkingVariations: [
+			"En proceso...",
+			"Trabajando...",
+			"Analizando...",
+			"Preparando...",
+			"Reflexionando...",
+			"Calculando...",
+			"Meditando...",
+			"Preparándome...",
+			"En ello...",
+			"Sumergiéndome..."
+		],
 		showFullReasoning: "Mostrar razonamiento completo",
 		thinkingDeeper: "Pensar más",
 		deepReasoning: "Razonamiento profundo",
@@ -455,7 +567,17 @@ export const BUTTON_LOCALES: Record<LanguageCode, ButtonLocale> = {
 		unavailableAgentPlaceholder: "Agente no disponible...",
 		// Button labels
 		thinkButton: "Pensar",
-		fileButton: "Archivo"
+		fileButton: "Archivo",
+		actionLabels: {
+			search: ["Buscando...", "En búsqueda..."],
+			read: ["Leyendo...", "Profundizando..."],
+			edit: ["Editando...", "Reescribiendo..."],
+			write: ["Escribiendo...", "Creando..."],
+			find: ["Buscando archivos...", "Explorando..."],
+			command: ["Ejecutando...", "Iniciando..."],
+			web: ["Buscando en web...", "Cargando..."],
+			thinking: ["Pensando...", "Reflexionando..."]
+		}
 	},
 	hi: {
 		copy: "कॉपी करें",
@@ -487,6 +609,18 @@ export const BUTTON_LOCALES: Record<LanguageCode, ButtonLocale> = {
 		fetchingUrl: "URL प्राप्त कर रहा है",
 		usingTool: "उपयोग कर रहा है",
 		thinking: "सोच रहा है...",
+		thinkingVariations: [
+			"प्रगति में...",
+			"काम कर रहा...",
+			"विश्लेषण...",
+			"तैयारी...",
+			"विचार कर रहा...",
+			"गणना कर रहा...",
+			"चिंतन...",
+			"तैयार हो रहा...",
+			"इस पर हूं...",
+			"गहराई में..."
+		],
 		showFullReasoning: "पूर्ण तर्क दिखाएं",
 		thinkingDeeper: "गहराई से सोचें",
 		deepReasoning: "गहन तर्क",
@@ -529,7 +663,17 @@ export const BUTTON_LOCALES: Record<LanguageCode, ButtonLocale> = {
 		unavailableAgentPlaceholder: "एजेंट उपलब्ध नहीं...",
 		// Button labels
 		thinkButton: "सोचें",
-		fileButton: "फ़ाइल"
+		fileButton: "फ़ाइल",
+		actionLabels: {
+			search: ["खोज रहा है...", "तलाश में..."],
+			read: ["पढ़ रहा है...", "गहराई में..."],
+			edit: ["संपादन...", "पुनर्लेखन..."],
+			write: ["लिख रहा है...", "बना रहा है..."],
+			find: ["फ़ाइलें खोज रहा...", "ब्राउज़ कर रहा..."],
+			command: ["निष्पादन...", "चला रहा है..."],
+			web: ["वेब खोज...", "लोड हो रहा..."],
+			thinking: ["सोच रहा है...", "विचार कर रहा..."]
+		}
 	},
 	zh: {
 		copy: "复制",
@@ -561,6 +705,18 @@ export const BUTTON_LOCALES: Record<LanguageCode, ButtonLocale> = {
 		fetchingUrl: "正在获取URL",
 		usingTool: "正在使用",
 		thinking: "思考中...",
+		thinkingVariations: [
+			"处理中...",
+			"工作中...",
+			"分析中...",
+			"准备中...",
+			"思索中...",
+			"计算中...",
+			"沉思中...",
+			"准备就绪...",
+			"进行中...",
+			"深入中..."
+		],
 		showFullReasoning: "显示完整推理",
 		thinkingDeeper: "深入思考",
 		deepReasoning: "深度推理",
@@ -603,7 +759,17 @@ export const BUTTON_LOCALES: Record<LanguageCode, ButtonLocale> = {
 		unavailableAgentPlaceholder: "代理不可用...",
 		// Button labels
 		thinkButton: "思考",
-		fileButton: "文件"
+		fileButton: "文件",
+		actionLabels: {
+			search: ["搜索中...", "查找中..."],
+			read: ["阅读中...", "深入中..."],
+			edit: ["编辑中...", "改写中..."],
+			write: ["写入中...", "创建中..."],
+			find: ["查找文件...", "浏览中..."],
+			command: ["执行中...", "运行中..."],
+			web: ["网络搜索...", "加载中..."],
+			thinking: ["思考中...", "沉思中..."]
+		}
 	},
 	ja: {
 		copy: "コピー",
@@ -635,6 +801,18 @@ export const BUTTON_LOCALES: Record<LanguageCode, ButtonLocale> = {
 		fetchingUrl: "URL取得中",
 		usingTool: "使用中",
 		thinking: "考え中...",
+		thinkingVariations: [
+			"処理中...",
+			"作業中...",
+			"分析中...",
+			"準備中...",
+			"考慮中...",
+			"計算中...",
+			"熟考中...",
+			"準備完了...",
+			"進行中...",
+			"深掘り中..."
+		],
 		showFullReasoning: "完全な推論を表示",
 		thinkingDeeper: "深く考える",
 		deepReasoning: "深い推論",
@@ -677,7 +855,17 @@ export const BUTTON_LOCALES: Record<LanguageCode, ButtonLocale> = {
 		unavailableAgentPlaceholder: "エージェントが利用できません...",
 		// Button labels
 		thinkButton: "考える",
-		fileButton: "ファイル"
+		fileButton: "ファイル",
+		actionLabels: {
+			search: ["検索中...", "探索中..."],
+			read: ["読み込み中...", "深掘り中..."],
+			edit: ["編集中...", "書き換え中..."],
+			write: ["書き込み中...", "作成中..."],
+			find: ["ファイル検索...", "閲覧中..."],
+			command: ["実行中...", "起動中..."],
+			web: ["ウェブ検索...", "読み込み中..."],
+			thinking: ["考え中...", "思索中..."]
+		}
 	}
 };
 
