@@ -1,4 +1,4 @@
-# Cristal - Claude Obsidian Plugin
+# Crystal - Claude Obsidian Plugin
 
 ## Обзор проекта
 
@@ -43,7 +43,7 @@ Anthropic **официально не разрешает** third-party прил�
 │  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘           │
 │         │                  │                  │                  │
 │  ┌──────▼──────────────────▼──────────────────▼───────┐          │
-│  │            CristalPlugin (main.ts)                  │          │
+│  │            CrystalPlugin (main.ts)                  │          │
 │  │  - settings.agents (AgentConfig[])                  │          │
 │  │  - settings.defaultAgentId                          │          │
 │  │  - SkillLoader — управление навыками                │          │
@@ -85,9 +85,9 @@ Anthropic **официально не разрешает** third-party прил�
 ### Структура проекта
 
 ```
-Cristal/
+Crystal/
 ├── src/
-│   ├── main.ts                    # Plugin entry (CristalPlugin class) — 505 строк
+│   ├── main.ts                    # Plugin entry (CrystalPlugin class) — 505 строк
 │   ├── ChatView.ts                # Chat UI (ItemView) — 4047 строк
 │   ├── settings.ts                # Settings UI & persistence — 1238 строк
 │   ├── settingsLocales.ts         # Settings UI localization (8 languages) — 2195 строк
@@ -434,7 +434,7 @@ interface AgentPersonalization {
 
 **Процесс:**
 1. При инициализации плагина SkillLoader загружает встроенные навыки из памяти
-2. Сканирует vault на пользовательские навыки из `.cristal/skills/`
+2. Сканирует vault на пользовательские навыки из `.crystal/skills/`
 3. При сохранении настроек агента синхронизирует навыки в `.claude/skills/`
 4. CLI подгружает навыки как дополнительные инструкции
 
@@ -471,11 +471,11 @@ Markdown контент с инструкциями.
 
 ### Пользовательские навыки
 
-**Размещение:** `<vault>/.cristal/skills/<skill-id>/SKILL.md`
+**Размещение:** `<vault>/.crystal/skills/<skill-id>/SKILL.md`
 
 **Пример структуры:**
 ```
-.cristal/
+.crystal/
 └── skills/
     └── my-research-skill/
         └── SKILL.md
@@ -548,7 +548,7 @@ interface ClaudeUsageLimits {
 
 ### Token History (статистика использования)
 
-**Хранение:** В `CristalSettings` (plugin.data.json)
+**Хранение:** В `CrystalSettings` (plugin.data.json)
 
 ```typescript
 // Общая дневная статистика
@@ -630,21 +630,21 @@ function parseJSONL(chunk: string): Message[] {
 ```typescript
 import { ItemView, WorkspaceLeaf } from 'obsidian';
 
-export const CRISTAL_VIEW_TYPE = 'cristal-chat-view';
+export const CRYSTAL_VIEW_TYPE = 'crystal-chat-view';
 
-export class CristalChatView extends ItemView {
+export class CrystalChatView extends ItemView {
   getViewType(): string {
-    return CRISTAL_VIEW_TYPE;
+    return CRYSTAL_VIEW_TYPE;
   }
 
   getDisplayText(): string {
-    return 'Cristal Chat';
+    return 'Crystal Chat';
   }
 
   async onOpen(): Promise<void> {
     const container = this.containerEl.children[1];
     container.empty();
-    container.createEl('div', { cls: 'cristal-chat-container' });
+    container.createEl('div', { cls: 'crystal-chat-container' });
     // Build UI...
   }
 }
@@ -724,7 +724,7 @@ Claude Pro/Max имеет rate limits на количество сообщени
 ### Installation
 ```bash
 git clone <repo>
-cd Cristal/Cristal
+cd Crystal/Crystal
 npm install
 ```
 
@@ -749,7 +749,7 @@ npm run build  # Production build
 
 ### Debugging
 - Chrome DevTools: View → Toggle Developer Tools
-- Console logs с префиксом `[Cristal]`
+- Console logs с префиксом `[Crystal]`
 
 ---
 
