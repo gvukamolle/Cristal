@@ -1,273 +1,232 @@
 # Crystal
 
-**Claude прямо в Obsidian.** Интеграция Claude Code CLI для работы с заметками — полная мощь Claude без ограничений веб-интерфейса.
+**Claude directly in Obsidian.** Claude Code CLI integration for working with notes — full power of Claude without web interface limitations.
 
 ---
 
-## Что это?
+## What is this?
 
-Crystal — это плагин для Obsidian, который интегрирует Claude Code CLI прямо в ваше хранилище заметок:
-- **Claude** (Anthropic) — мощный анализ, рассуждения, extended thinking для сложных задач
+Crystal is an Obsidian plugin that integrates Claude Code CLI directly into your note vault:
+- **Claude** (Anthropic) — powerful analysis, reasoning, extended thinking for complex tasks
 
-Не просто чат-бот, а полноценный агент с доступом к вашему vault. Он **видит ваши заметки**, может их **редактировать**, **искать информацию в интернете** и работать с контекстом вашей базы знаний.
+Not just a chatbot, but a full-featured agent with access to your vault. It **sees your notes**, can **edit them**, **search the web**, and work within the context of your knowledge base.
 
-### Почему это круто?
+### Why is this cool?
 
-- **Прямая работа с заметками** — упоминайте файлы через `@`, агент увидит их содержимое и сможет редактировать
-- **Тонкая настройка агента** — разрешения, модели, Extended Thinking, персонализация
-- **Skills система** — 6 встроенных навыков для Obsidian + поддержка пользовательских
-- **Статистика использования** — отслеживание токенов, визуальные лимиты, история по дням
-- **Редактирование в один клик** — ответы AI можно сразу вставить в заметку (заменить, добавить в конец, скопировать)
-- **Веб-поиск и анализ** — Claude может искать информацию и читать веб-страницы (настраиваемые разрешения)
-- **Extended Thinking** — глубокий анализ для сложных задач
-- **8 языков интерфейса** — русский, английский, французский, немецкий, испанский, хинди, китайский, японский
-- **Слеш-команды** — быстрые действия: `/summarize`, `/translate`, `/rewrite` и другие + кастомные команды
-- **Гибкий выбор моделей** — Claude Haiku/Sonnet/Opus 4.5
+- **Direct work with notes** — mention files via `@`, the agent sees their content and can edit them
+- **Fine-tuned agent** — permissions, models, Extended Thinking, personalization
+- **Skills system** — 6 built-in skills for Obsidian + custom skill support
+- **Usage statistics** — token tracking, visual limits, daily history
+- **One-click editing** — AI responses can be instantly inserted into notes (replace, append, copy)
+- **Web search and analysis** — Claude can search and read web pages (configurable permissions)
+- **Extended Thinking** — deep analysis for complex tasks
+- **8 interface languages** — Russian, English, French, German, Spanish, Hindi, Chinese, Japanese
+- **Slash commands** — quick actions: `/summarize`, `/translate`, `/rewrite` and more + custom commands
+- **Model selection** — Claude Haiku/Sonnet/Opus 4.5
 
 ---
 
-## Возможности
+## Features
 
-### Тонкая настройка агента
+### Fine-tuned Agent
 
-**Модели:**
-| Модель | Характеристика |
-|--------|---------------|
-| **Claude Haiku 4.5** | Быстрый и экономичный — для простых задач |
-| **Claude Sonnet 4.5** | Сбалансированный — оптимальный выбор |
-| **Claude Opus 4.5** | Самый мощный — для сложного анализа |
+**Models:**
+| Model | Characteristic |
+|-------|---------------|
+| **Claude Haiku 4.5** | Fast and economical — for simple tasks |
+| **Claude Sonnet 4.5** | Balanced — optimal choice |
+| **Claude Opus 4.5** | Most powerful — for complex analysis |
 
-**Разрешения (Permissions):**
-| Разрешение | Описание |
-|------------|----------|
-| `fileRead` | Чтение файлов из vault |
-| `fileWrite` | Создание новых файлов |
-| `fileEdit` | Редактирование существующих файлов |
-| `webSearch` | Поиск информации в интернете |
-| `webFetch` | Загрузка и анализ веб-страниц |
-| `task` | Запуск sub-агентов для сложных задач |
-| `extendedThinking` | Режим глубокого анализа |
+**Permissions:**
+| Permission | Description |
+|------------|-------------|
+| `fileRead` | Read files from vault |
+| `fileWrite` | Create new files |
+| `fileEdit` | Edit existing files |
+| `webSearch` | Search the internet |
+| `webFetch` | Load and analyze web pages |
+| `task` | Run sub-agents for complex tasks |
+| `extendedThinking` | Deep analysis mode |
 
 **Extended Thinking:**
-Включите для задач, требующих глубокого анализа — Claude будет "думать вслух", прежде чем дать ответ. Особенно полезно для:
-- Сложных аналитических задач
-- Многошаговых рассуждений
-- Задач с неоднозначными требованиями
+Enable for tasks requiring deep analysis — Claude will "think out loud" before responding. Especially useful for:
+- Complex analytical tasks
+- Multi-step reasoning
+- Tasks with ambiguous requirements
 
-**Персонализация:**
-Настройте агента под себя:
-- Ваше имя и роль
-- Контекст работы (чем занимаетесь)
-- Предпочитаемый стиль общения
-- Текущий фокус/проекты
+**Personalization:**
+Customize the agent:
+- Your name and role
+- Work context (what you do)
+- Preferred communication style
+- Current focus/projects
 
-### Skills система
+### Skills System
 
-6 встроенных навыков для работы с Obsidian:
+6 built-in skills for working with Obsidian:
 
-| Навык | Описание |
-|-------|----------|
-| `obsidian-markdown` | Создание и редактирование Markdown заметок |
-| `obsidian-canvas` | Работа с Canvas (визуальные доски) |
-| `obsidian-base` | Работа с Bases (структурированные БД) |
-| `obsidian-links` | Понимание графа связей (backlinks, outlinks) |
-| `obsidian-tags` | Работа с тегами и иерархиями |
-| `obsidian-dataview` | Написание Dataview запросов |
+| Skill | Description |
+|-------|-------------|
+| `obsidian-markdown` | Creating and editing Markdown notes |
+| `obsidian-canvas` | Working with Canvas (visual boards) |
+| `obsidian-base` | Working with Bases (structured DBs) |
+| `obsidian-links` | Understanding the link graph (backlinks, outlinks) |
+| `obsidian-tags` | Working with tags and hierarchies |
+| `obsidian-dataview` | Writing Dataview queries |
 
-**Пользовательские навыки:**
-Создавайте свои навыки в `.crystal/skills/<skill-name>/SKILL.md`
+**Custom skills:**
+Create your own skills in `.crystal/skills/<skill-name>/SKILL.md`
 
-### Работа с заметками
-- Упоминание файлов через `@` — агент видит содержимое
-- Прикрепление файлов и изображений
-- Кнопки "Заменить", "Добавить", "Копировать" для быстрой вставки ответов
-- Создание новых заметок из ответов AI
+### Working with Notes
+- Mention files via `@` — agent sees content
+- Attach files and images
+- "Replace", "Append", "Copy" buttons for quick response insertion
+- Create new notes from AI responses
 
-### Встроенные команды
-| Команда | Описание |
-|---------|----------|
-| `/summarize` | Краткое резюме заметки |
-| `/translate` | Перевод на указанный язык |
-| `/rewrite` | Переписать понятнее |
-| `/expand` | Развить и дополнить идеи |
-| `/fix` | Исправить ошибки и опечатки |
-| `/bullets` | Преобразовать в список |
-| `/questions` | Сгенерировать вопросы по теме |
-| `/difficulty` | Объяснить проще или сложнее |
-| `/compact` | Сжать контекст разговора |
+### Built-in Commands
+| Command | Description |
+|---------|-------------|
+| `/summarize` | Brief summary of a note |
+| `/translate` | Translate to specified language |
+| `/rewrite` | Rewrite more clearly |
+| `/expand` | Develop and expand ideas |
+| `/fix` | Fix errors and typos |
+| `/bullets` | Convert to bullet list |
+| `/questions` | Generate questions on the topic |
+| `/difficulty` | Explain simpler or more complex |
+| `/compact` | Compress conversation context |
 
-### Статистика использования
-- **Отслеживание токенов** — input/output tokens для каждой сессии
-- **Кэш-токены** — отображение cache_read и cache_creation tokens
-- **Визуальные лимиты** — прогресс-бары для 5-hour и weekly лимитов
-- **История по дням** — смотрите использование за последние дни
-
----
-
-## Требования
-
-- **Подписка Claude** — Pro ($20/мес) или Max ($100/мес)
-- **Claude Code CLI** — бесплатный инструмент от Anthropic
-- **Node.js 18+** — для работы CLI
-- **Obsidian Desktop** — плагин работает только на десктопной версии
+### Usage Statistics
+- **Token tracking** — input/output tokens for each session
+- **Cache tokens** — display of cache_read and cache_creation tokens
+- **Visual limits** — progress bars for 5-hour and weekly limits
+- **Daily history** — view usage for recent days
 
 ---
 
-## Подготовка (для новичков)
+## Requirements
 
-Если у вас ещё не установлен Node.js, следуйте инструкциям ниже.
-
-### Как открыть терминал
-
-**macOS:**
-- Нажмите `Cmd + Space`, введите "Terminal", нажмите Enter
-- Или: Finder → Программы → Утилиты → Терминал
-
-**Windows:**
-- Нажмите `Win + R`, введите "cmd" или "powershell", нажмите Enter
-- Или: меню Пуск → поиск "PowerShell"
-
-**Linux:**
-- Нажмите `Ctrl + Alt + T`
-- Или через меню приложений → Терминал
-
-### Установка Node.js
-
-**macOS (через Homebrew):**
-```bash
-# 1. Установить Homebrew (если ещё нет)
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-
-# 2. После установки добавить в PATH (команда из вывода установщика)
-echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> ~/.zprofile
-eval "$(/opt/homebrew/bin/brew shellenv)"
-
-# 3. Установить Node.js
-brew install node
-
-# 4. Проверить установку
-node --version  # Должно показать v18+ или выше
-npm --version   # Должно показать 9+ или выше
-```
-
-**Windows:**
-1. Скачайте установщик с https://nodejs.org (выберите LTS версию)
-2. Запустите установщик и следуйте инструкциям
-3. Перезапустите терминал и проверьте: `node --version`
-
-**Linux (Ubuntu/Debian):**
-```bash
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-sudo apt-get install -y nodejs
-node --version
-```
+- **Claude subscription** — Pro ($20/month) or Max ($100/month)
+- **Claude Code CLI** — free tool from Anthropic
+- **Node.js 18+** — for CLI operation
+- **Obsidian Desktop** — plugin works only on desktop version
 
 ---
 
-## Установка
+## Installation
 
-### 1. Установка плагина
-
-1. Скачайте репозиторий или клонируйте его в `~/vault/.obsidian/plugins/`
-2. Выполните `npm install && npm run build` в папке плагина
-3. Включите плагин в настройках Obsidian: **Настройки → Сторонние плагины → Crystal**
-
-### 2. Установка Claude CLI
+### 1. Install Claude CLI
 
 ```bash
 npm i -g @anthropic-ai/claude-code
 ```
 
-**Аутентификация через OAuth:**
-1. Запустите команду `claude` в терминале
-2. Откроется браузер для OAuth авторизации
-3. Войдите с логином и паролем от вашего Claude.ai аккаунта
-4. Токены автоматически сохраняются:
-   - macOS: в Keychain
-   - Linux/WSL: в `~/.claude/.credentials.json`
+**OAuth Authentication:**
+1. Run `claude` command in terminal
+2. Browser will open for OAuth authorization
+3. Log in with your Claude.ai account credentials
+4. Tokens are automatically saved:
+   - macOS: in Keychain
+   - Linux/WSL: in `~/.claude/.credentials.json`
+
+### 2. Install Plugin
+
+**From Community Plugins (recommended):**
+1. Open **Settings → Community plugins**
+2. Search for "Crystal"
+3. Click Install, then Enable
+
+**Manual installation:**
+1. Download latest release from GitHub
+2. Extract `main.js`, `manifest.json`, `styles.css` to `<vault>/.obsidian/plugins/crystal-cli-llm/`
+3. Enable in Obsidian settings
 
 ---
 
-## Использование
+## Usage
 
-### Базовое
-Просто пишите в чат — Claude ответит. Используйте `@` для упоминания файлов из вашего хранилища.
+### Basic
+Just type in chat — Claude will respond. Use `@` to mention files from your vault.
 
-### Команды
-Начните сообщение с `/` чтобы увидеть доступные команды. Например:
-- `/summarize` — сделать резюме текущей заметки
-- `/translate английский` — перевести на английский
+### Commands
+Start a message with `/` to see available commands. For example:
+- `/summarize` — create summary of current note
+- `/translate english` — translate to English
 
-### Контекст
-- **@файл.md** — Claude увидит содержимое файла
-- **Прикрепление файлов** — перетащите файл в чат или используйте кнопку
-- **Выделенный текст** — если выделить текст в заметке, нажмите правой кнопкой мыши и выберите "Crystal: Упомянуть при запросе"
+### Context
+- **@file.md** — Claude sees file content
+- **File attachment** — drag file to chat or use button
+- **Selected text** — select text in note, right-click and choose "Crystal: Mention in request"
 
-### Кнопки ответа
-После ответа Claude появляются кнопки:
-- **Заменить** — заменить содержимое текущей заметки
-- **Добавить** — добавить в конец заметки
-- **Копировать** — скопировать в буфер обмена
-- **Новая страница** — создать новую заметку с ответом
+### Response Buttons
+After Claude's response, buttons appear:
+- **Replace** — replace content of current note
+- **Append** — add to end of note
+- **Copy** — copy to clipboard
+- **New page** — create new note with response
 
 ---
 
-## Настройка
+## Configuration
 
-Откройте **Настройки → Crystal** для конфигурации:
+Open **Settings → Crystal** for configuration:
 
-### Модели
-- **Claude Haiku 4.5** — быстрый, для простых задач
-- **Claude Sonnet 4.5** — сбалансированный (рекомендуется)
-- **Claude Opus 4.5** — самый мощный, для сложного анализа
+### Models
+- **Claude Haiku 4.5** — fast, for simple tasks
+- **Claude Sonnet 4.5** — balanced (recommended)
+- **Claude Opus 4.5** — most powerful, for complex analysis
 
-### Разрешения
-Контролируйте возможности Claude:
-- **Файлы** — чтение, запись, редактирование
-- **Веб** — поиск и загрузка страниц
-- **Субагенты** — запуск дополнительных задач
-- **Extended Thinking** — глубокий анализ
+### Permissions
+Control Claude's capabilities:
+- **Files** — read, write, edit
+- **Web** — search and load pages
+- **Sub-agents** — run additional tasks
+- **Extended Thinking** — deep analysis
 
 ### Skills
-Выбирайте навыки, которые нужны для вашей работы:
+Choose skills needed for your work:
 - Markdown, Canvas, Bases, Links, Tags, Dataview
-- Создавайте собственные навыки
+- Create your own skills
 
-### Персонализация
-Настройте контекст для более релевантных ответов:
-- Имя и роль
-- Контекст работы
-- Стиль общения
-- Текущие проекты
+### Personalization
+Set up context for more relevant responses:
+- Name and role
+- Work context
+- Communication style
+- Current projects
 
-### Команды
-- Включайте/отключайте встроенные команды
-- Создавайте свои слеш-команды с произвольными промптами
+### Commands
+- Enable/disable built-in commands
+- Create custom slash commands with arbitrary prompts
 
-### Язык интерфейса
-Выбор из 8 языков: русский, английский, французский, немецкий, испанский, хинди, китайский, японский.
+### Interface Language
+Choice of 8 languages: Russian, English, French, German, Spanish, Hindi, Chinese, Japanese.
 
 ---
 
-## Решение проблем
+## Troubleshooting
 
-### CLI не найден
-Запустите `npm i -g @anthropic-ai/claude-code` и проверьте `claude --version`
+### CLI not found
+Run `npm i -g @anthropic-ai/claude-code` and check `claude --version`
 
-### Ошибка авторизации
-Запустите `claude` в терминале и авторизуйтесь заново через OAuth
+### Authorization error
+Run `claude` in terminal and re-authorize via OAuth
 
 ### Token expired
-CLI автоматически обновляет токены. Если не работает — переавторизация через `claude`
+CLI automatically refreshes tokens. If not working — re-authorize via `claude`
 
-### Плагин не появляется
-Перезагрузите Obsidian (`Cmd/Ctrl + R`)
+### Plugin not appearing
+Reload Obsidian (`Cmd/Ctrl + R`)
 
-### Высокое использование токенов
-Смотрите статистику в настройках, используйте меньшие модели (Haiku вместо Sonnet)
+### High token usage
+Check statistics in settings, use smaller models (Haiku instead of Sonnet)
 
 ---
 
-## Автор
+## Author
 
-gvukamolle. Сделано с помощью Claude.
+[Timofey Grushko](https://github.com/gvukamolle)
+
+## License
+
+MIT

@@ -2,8 +2,9 @@
 	"id": "crystal-cli-llm",
 	"name": "Crystal",
 	"version": "0.2.0",
-	"minAppVersion": "0.15.0",
+	"minAppVersion": "1.4.0",
 	"description": "Universal LLM CLI integration for Obsidian",
 	"author": "Timofey Grushko",
+	"authorUrl": "https://github.com/gvukamolle",
 	"isDesktopOnly": true
 }
