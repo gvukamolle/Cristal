@@ -96,6 +96,7 @@ export interface ChatMessage {
 	timestamp: number;
 	isStreaming?: boolean;
 	isError?: boolean;
+	isIntermediate?: boolean;  // Intermediate message (text between tool executions)
 	thinkingSteps?: ToolUseBlock[];  // Tool steps performed for this message
 	selectionContext?: SelectionContext;  // Selection context for this response (for replace/append)
 	attachedFiles?: { name: string; path: string; type: string }[];  // Files attached to this message

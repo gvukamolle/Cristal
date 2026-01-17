@@ -96,6 +96,10 @@ export class CrystalChatView extends ItemView {
 	private hasReceivedText: boolean = false;  // Track if we received any text in current response
 	private currentMessageThinkingSteps: ToolUseBlock[] = [];  // Accumulated steps for saving to message history
 
+	// Delayed button addition (to detect intermediate vs final messages)
+	private buttonAddTimer: ReturnType<typeof setTimeout> | null = null;
+	private pendingButtonData: { messageEl: HTMLElement; content: string; selectionContext?: SelectionContext; messageId: string } | null = null;
+
 	// Token tracking for history
 	private lastRecordedTokens: number = 0;  // Track previously recorded total tokens
 
@@ -1024,6 +1028,13 @@ Provide only the summary, no additional commentary.`;
 	}
 
 	private loadSession(session: import("./types").ChatSession): void {
+		// Cancel any pending button additions from previous session
+		if (this.buttonAddTimer) {
+			clearTimeout(this.buttonAddTimer);
+			this.buttonAddTimer = null;
+			this.pendingButtonData = null;
+		}
+
 		// Set active session ID for event filtering
 		this.activeSessionId = session.id;
 
@@ -1050,7 +1061,7 @@ Provide only the summary, no additional commentary.`;
 				if (msg.role === "user") {
 					this.renderUserMessage(msg.content, msg.id, msg.attachedFiles, msg.activeFileContext);
 				} else {
-					this.renderAssistantMessage(msg.content, msg.id, msg.thinkingSteps, msg.selectionContext);
+					this.renderAssistantMessage(msg.content, msg.id, msg.thinkingSteps, msg.selectionContext, msg.isIntermediate);
 				}
 			}
 		} else {
@@ -1065,7 +1076,7 @@ Provide only the summary, no additional commentary.`;
 					if (msg.role === "user") {
 						this.renderUserMessage(msg.content, msg.id, msg.attachedFiles, msg.activeFileContext);
 					} else {
-						this.renderAssistantMessage(msg.content, msg.id, msg.thinkingSteps, msg.selectionContext);
+						this.renderAssistantMessage(msg.content, msg.id, msg.thinkingSteps, msg.selectionContext, msg.isIntermediate);
 					}
 				}
 			}
@@ -1126,9 +1137,12 @@ Provide only the summary, no additional commentary.`;
 				});
 			}
 		}
+
+		// Add action buttons (copy and edit)
+		this.addUserMessageButtons(msgEl, content, id);
 	}
 
-	private renderAssistantMessage(content: string, id: string, thinkingSteps?: ToolUseBlock[], selectionContext?: SelectionContext): void {
+	private renderAssistantMessage(content: string, id: string, thinkingSteps?: ToolUseBlock[], selectionContext?: SelectionContext, isIntermediate?: boolean): void {
 		// Render thinking block if we have saved steps
 		if (thinkingSteps && thinkingSteps.length > 0) {
 			this.renderThinkingBlock(thinkingSteps);
@@ -1139,6 +1153,7 @@ Provide only the summary, no additional commentary.`;
 			return;
 		}
 
+		// Render all messages with markdown (both intermediate and final)
 		const msgEl = this.messagesContainer.createDiv({
 			cls: "crystal-message crystal-message-assistant"
 		});
@@ -1146,7 +1161,11 @@ Provide only the summary, no additional commentary.`;
 		const contentEl = msgEl.createDiv({ cls: "crystal-message-content" });
 		MarkdownRenderer.render(this.app, content, contentEl, "", this);
 		this.removeEditableAttributes(contentEl);
-		this.addCopyButton(msgEl, content, selectionContext);
+
+		// Only add buttons for final messages (not intermediate)
+		if (!isIntermediate) {
+			this.addCopyButton(msgEl, content, selectionContext);
+		}
 	}
 
 	private renderThinkingBlock(steps: ToolUseBlock[]): void {
@@ -2223,6 +2242,7 @@ Provide only the summary, no additional commentary.`;
 		this.renderedTextContent = fullText;
 		this.currentAssistantMessage.empty();
 
+		// Render with markdown (streaming element)
 		MarkdownRenderer.render(
 			this.app,
 			fullText,
@@ -2265,22 +2285,17 @@ Provide only the summary, no additional commentary.`;
 	private saveTextAsMessage(): void {
 		if (!this.currentAssistantContent.trim()) return;
 
-		// Flush any remaining words in queue before removing element
+		// Flush any remaining words in queue
 		this.flushWordQueue();
 
-		// Remove streaming text element
+		// Remove streaming element
 		if (this.currentAssistantMessage) {
 			this.currentAssistantMessage.remove();
 			this.currentAssistantMessage = null;
 		}
-		this.lastRenderedWordCount = 0;
-		this.wordQueue = [];
-		this.renderedTextContent = "";
 
-		// Capture selection context before it gets cleared
+		// Create message with markdown (same as final messages)
 		const selectionContext = this.lastSelectionContext ? { ...this.lastSelectionContext } : undefined;
-
-		// Create final message block
 		const msgId = crypto.randomUUID();
 		const msgEl = this.messagesContainer.createDiv({
 			cls: "crystal-message crystal-message-assistant"
@@ -2296,9 +2311,8 @@ Provide only the summary, no additional commentary.`;
 			this
 		);
 		this.removeEditableAttributes(contentEl);
-		this.addCopyButton(msgEl, this.currentAssistantContent, selectionContext);
 
-		// Save to history with selection context
+		// Save to history (initially without intermediate flag)
 		const message: ChatMessage = {
 			id: msgId,
 			role: "assistant",
@@ -2307,8 +2321,27 @@ Provide only the summary, no additional commentary.`;
 			selectionContext
 		};
 		this.messages.push(message);
+
+		// Schedule button addition after 0.5 second (will be cancelled if tool arrives)
+		this.pendingButtonData = { messageEl: msgEl, content: this.currentAssistantContent, selectionContext, messageId: msgId };
+		this.buttonAddTimer = setTimeout(() => {
+			if (this.pendingButtonData) {
+				this.addCopyButton(
+					this.pendingButtonData.messageEl,
+					this.pendingButtonData.content,
+					this.pendingButtonData.selectionContext
+				);
+				this.pendingButtonData = null;
+			}
+			this.buttonAddTimer = null;
+		}, 500);
+
+		// Reset state
 		this.currentAssistantContent = "";
 		this.hasReceivedText = false;
+		this.lastRenderedWordCount = 0;
+		this.wordQueue = [];
+		this.renderedTextContent = "";
 		this.saveCurrentSession();
 	}
 
@@ -2316,8 +2349,8 @@ Provide only the summary, no additional commentary.`;
 		// Mark current thinking block as done (stop animation)
 		this.markThinkingDone();
 
-		// Create streaming text element directly without "Response" header
-		// This makes output consistent
+		// Always create regular streaming element
+		// We'll determine if it's intermediate later based on context
 		this.currentAssistantMessage = this.messagesContainer.createDiv({
 			cls: "crystal-streaming-text"
 		});
@@ -2350,6 +2383,22 @@ Provide only the summary, no additional commentary.`;
 		this.wordQueue = [];
 		this.lastRenderedWordCount = 0;
 		this.renderedTextContent = "";
+
+		// Cancel pending button addition timer (we'll add buttons immediately)
+		if (this.buttonAddTimer) {
+			clearTimeout(this.buttonAddTimer);
+			this.buttonAddTimer = null;
+		}
+
+		// If there's pending button data, add buttons immediately (this is final message)
+		if (this.pendingButtonData) {
+			this.addCopyButton(
+				this.pendingButtonData.messageEl,
+				this.pendingButtonData.content,
+				this.pendingButtonData.selectionContext
+			);
+			this.pendingButtonData = null;
+		}
 
 		// Remove streaming text element (it was temporary)
 		if (this.currentAssistantMessage) {
@@ -2486,6 +2535,50 @@ Provide only the summary, no additional commentary.`;
 
 		// Update visibility based on active file
 		this.updateNoteActionButtons(actionsEl);
+	}
+
+	private addUserMessageButtons(messageEl: HTMLElement, content: string, messageId: string): void {
+		const locale = getButtonLocale(this.plugin.settings.language);
+		const actionsEl = messageEl.createDiv({ cls: "crystal-message-actions" });
+
+		// Copy button (icon-only)
+		const copyBtn = actionsEl.createEl("button", {
+			cls: "crystal-action-btn-icon",
+			attr: { "aria-label": locale.copy, "title": locale.copy }
+		});
+		setIcon(copyBtn, "copy");
+
+		copyBtn.addEventListener("click", async () => {
+			try {
+				await navigator.clipboard.writeText(content);
+				// Show success feedback
+				copyBtn.empty();
+				setIcon(copyBtn, "check");
+				copyBtn.setAttribute("title", locale.copySuccess);
+				copyBtn.addClass("crystal-action-btn-success");
+
+				// Reset after 2 seconds
+				setTimeout(() => {
+					copyBtn.empty();
+					setIcon(copyBtn, "copy");
+					copyBtn.setAttribute("title", locale.copy);
+					copyBtn.removeClass("crystal-action-btn-success");
+				}, 2000);
+			} catch (err) {
+				console.error("Failed to copy:", err);
+			}
+		});
+
+		// Edit button (icon-only)
+		const editBtn = actionsEl.createEl("button", {
+			cls: "crystal-action-btn-icon",
+			attr: { "aria-label": locale.edit, "title": locale.edit }
+		});
+		setIcon(editBtn, "pencil");
+
+		editBtn.addEventListener("click", () => {
+			this.startEditingMessage(messageEl, content, messageId);
+		});
 	}
 
 	private updateNoteActionButtons(actionsEl: HTMLElement): void {
@@ -2683,6 +2776,21 @@ Provide only the summary, no additional commentary.`;
 
 		// If we already received text, save it as separate message before new tools
 		if (this.hasReceivedText) {
+			// Cancel pending button addition (this is an intermediate message)
+			if (this.buttonAddTimer) {
+				clearTimeout(this.buttonAddTimer);
+				this.buttonAddTimer = null;
+
+				// Mark the message as intermediate in history
+				if (this.pendingButtonData) {
+					const msg = this.messages.find(m => m.id === this.pendingButtonData!.messageId);
+					if (msg) {
+						msg.isIntermediate = true;
+					}
+					this.pendingButtonData = null;
+				}
+			}
+
 			this.saveTextAsMessage();      // Save current text as separate message
 			this.hasReceivedText = false;  // Reset so next text creates new response block
 			this.createThinkingBlock();    // Create new thinking block after previous response

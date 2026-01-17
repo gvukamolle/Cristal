@@ -48,13 +48,13 @@
 }
 
 .crystal-action-btn {
-	background: transparent;
-	border: none;
-	width: 28px;
-	height: 28px;
-	padding: 6px;
+	background: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	width: 32px;
+	height: 32px;
+	padding: 0;
 	cursor: pointer;
-	border-radius: 4px;
+	border-radius: 6px;
 	color: var(--text-muted);
 	display: flex;
 	align-items: center;
@@ -68,9 +68,8 @@
 }
 
 .crystal-action-btn:hover {
-	background: var(--background-modifier-hover);
+	border-color: var(--interactive-accent);
 	color: var(--text-normal);
-	transform: translateY(-1px);
 }
 
 /* Custom Session Dropdown */
@@ -86,6 +85,7 @@
 	align-items: center;
 	gap: 4px;
 	padding: 6px 10px;
+	height: 32px;
 	background: var(--background-primary);
 	border: 1px solid var(--background-modifier-border);
 	border-radius: 6px;
@@ -93,6 +93,7 @@
 	font-size: 13px;
 	cursor: pointer;
 	transition: all 0.15s ease;
+	box-sizing: border-box;
 }
 
 .crystal-session-trigger:hover {
@@ -123,7 +124,6 @@
 }
 
 .crystal-session-list {
-	display: none;
 	position: absolute;
 	top: calc(100% + 4px);
 	left: 0;
@@ -135,10 +135,17 @@
 	border-radius: 6px;
 	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 	z-index: 100;
+	/* Анимация появления */
+	opacity: 0;
+	transform: translateY(-8px);
+	pointer-events: none;
+	transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
 .crystal-session-list-open {
-	display: block;
+	opacity: 1;
+	transform: translateY(0);
+	pointer-events: auto;
 }
 
 .crystal-session-item {
@@ -317,6 +324,19 @@
 	border-radius: 12px;
 	font-size: 14px;
 	line-height: 1.6;
+	/* Анимация появления */
+	animation: crystal-message-appear 0.3s ease;
+}
+
+@keyframes crystal-message-appear {
+	from {
+		opacity: 0;
+		transform: translateY(12px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
 }
 
 .crystal-message-user {
@@ -654,22 +674,32 @@
 }
 
 .crystal-model-select {
-	-webkit-appearance: none;
-	-moz-appearance: none;
-	appearance: none;
-	padding: 6px 28px 6px 10px;
-	background-color: var(--background-primary);
-	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-	background-repeat: no-repeat;
-	background-position: right 8px center;
-	border: 1px solid var(--background-modifier-border);
-	border-radius: 6px;
-	color: var(--text-normal);
-	font-size: 12px;
-	font-family: var(--font-text);
-	cursor: pointer;
-	min-width: 100px;
-	line-height: 1.4;
+	-webkit-appearance: none !important;
+	-moz-appearance: none !important;
+	appearance: none !important;
+	padding: 6px 28px 6px 10px !important;
+	height: 32px !important;
+	min-height: 32px !important;
+	max-height: 32px !important;
+	background-color: var(--background-primary) !important;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
+	background-repeat: no-repeat !important;
+	background-position: right 8px center !important;
+	border: 1px solid var(--background-modifier-border) !important;
+	border-radius: 6px !important;
+	color: var(--text-normal) !important;
+	font-size: 13px !important;
+	font-family: var(--font-text) !important;
+	cursor: pointer !important;
+	min-width: 100px !important;
+	box-sizing: border-box !important;
+	transition: all 0.15s ease !important;
+	vertical-align: middle !important;
+	line-height: 1 !important;
+	margin: 0 !important;
+	white-space: nowrap !important;
+	overflow: hidden !important;
+	text-overflow: ellipsis !important;
 }
 
 .crystal-model-select option {
@@ -701,12 +731,12 @@
 	width: 32px;
 	height: 32px;
 	padding: 0;
-	background: var(--interactive-accent);
-	color: var(--text-on-accent);
-	border: none;
+	background: var(--background-primary);
+	color: var(--text-muted);
+	border: 1px solid var(--background-modifier-border);
 	border-radius: 6px;
 	cursor: pointer;
-	transition: background 0.15s ease, transform 0.1s ease;
+	transition: all 0.15s ease;
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -718,12 +748,8 @@
 }
 
 .crystal-send-btn:hover {
-	background: var(--interactive-accent-hover);
-	transform: scale(1.05);
-}
-
-.crystal-send-btn:active {
-	transform: scale(0.95);
+	border-color: var(--interactive-accent);
+	color: var(--text-normal);
 }
 
 .crystal-send-btn-stop {
@@ -886,7 +912,6 @@
 
 /* Autocomplete Popup */
 .crystal-autocomplete {
-	display: none;
 	position: absolute;
 	bottom: 100%;
 	left: 0;
@@ -899,15 +924,23 @@
 	border-radius: 8px;
 	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 	z-index: 100;
+	/* Анимация появления */
+	opacity: 0;
+	transform: translateY(8px);
+	pointer-events: none;
+	transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
-/* Меньшая высота для меню моделей (макс 2 модели) */
+/* Без ограничения высоты для меню моделей - показываем все */
 .crystal-autocomplete.crystal-model-autocomplete {
-	max-height: 150px;
+	max-height: none;
+	overflow-y: visible;
 }
 
 .crystal-autocomplete.crystal-autocomplete-visible {
-	display: block;
+	opacity: 1;
+	transform: translateY(0);
+	pointer-events: auto;
 }
 
 .crystal-autocomplete-item {
@@ -1023,7 +1056,6 @@
 
 /* Mention Autocomplete - inherits from .crystal-autocomplete */
 .crystal-mention-autocomplete {
-	display: none;
 	position: absolute;
 	bottom: 100%;
 	left: 0;
@@ -1036,10 +1068,17 @@
 	border-radius: 8px;
 	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 	z-index: 100;
+	/* Анимация появления */
+	opacity: 0;
+	transform: translateY(8px);
+	pointer-events: none;
+	transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
 .crystal-mention-autocomplete.crystal-autocomplete-visible {
-	display: block;
+	opacity: 1;
+	transform: translateY(0);
+	pointer-events: auto;
 }
 
 .crystal-mention-autocomplete::-webkit-scrollbar {
@@ -1152,7 +1191,7 @@
 }
 
 .crystal-thinking-toggle-btn:hover {
-	background: var(--background-modifier-hover);
+	border-color: var(--interactive-accent);
 	color: var(--text-normal);
 }
 
@@ -1168,7 +1207,7 @@
 }
 
 .crystal-thinking-toggle-btn.crystal-thinking-toggle-active:hover {
-	background: var(--interactive-accent-hover);
+	border-color: var(--interactive-accent-hover);
 }
 
 .crystal-thinking-toggle-btn.crystal-btn-disabled {
@@ -1302,22 +1341,22 @@
 .crystal-model-indicator {
 	display: flex;
 	align-items: center;
-	gap: 6px;
+	gap: 4px;
 	padding: 6px 10px;
+	height: 32px;
 	background: var(--background-primary);
 	border: 1px solid var(--background-modifier-border);
 	border-radius: 6px;
-	font-size: 12px;
-	color: var(--text-muted);
+	font-size: 13px;
+	color: var(--text-normal);
 	cursor: pointer;
 	transition: all 0.15s ease;
+	box-sizing: border-box;
 }
 
 .crystal-model-indicator:hover {
-	background: var(--background-modifier-hover);
 	border-color: var(--interactive-accent);
 	color: var(--text-normal);
-	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .crystal-model-indicator-locked {
@@ -1562,6 +1601,21 @@
 	color: var(--text-normal);
 	font-size: 14px;
 	line-height: 1.5;
+	white-space: pre-wrap;
+	word-wrap: break-word;
+}
+
+/* Intermediate text - plain text without markdown or buttons */
+.crystal-intermediate-text {
+	padding: 12px 16px;
+	margin-top: 8px;
+	color: var(--text-muted);
+	font-size: 13px;
+	line-height: 1.6;
+	font-style: italic;
+	background: var(--background-primary);
+	border-left: 3px solid var(--background-modifier-border);
+	border-radius: 4px;
 	white-space: pre-wrap;
 	word-wrap: break-word;
 }
@@ -1870,22 +1924,17 @@
 	padding: 4px 10px;
 	height: 32px;
 	border-radius: 6px;
-	border: none;
-	background: var(--background-modifier-border);
+	border: 1px solid var(--background-modifier-border);
+	background: var(--background-primary);
 	color: var(--text-muted);
 	cursor: pointer;
-	transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease;
+	transition: all 0.15s ease;
 	font-size: 13px;
 }
 
 .crystal-attach-btn:hover {
-	background: var(--interactive-accent);
-	color: var(--text-on-accent);
-	transform: scale(1.05);
-}
-
-.crystal-attach-btn:active {
-	transform: scale(0.95);
+	border-color: var(--interactive-accent);
+	color: var(--text-normal);
 }
 
 .crystal-attach-btn svg {
@@ -3557,8 +3606,10 @@
 
 /* Settings section block */
 .crystal-settings-section {
-	padding: 16px 0;
+	padding: 16px;
 	margin-bottom: 16px;
+	background: var(--background-secondary);
+	border-radius: 8px;
 }
 
 .crystal-settings-section h3 {
@@ -3570,8 +3621,11 @@
 
 /* Settings items in section */
 .crystal-settings-section .setting-item {
-	border: none;
+	border: none !important;
+	border-top: none !important;
+	border-bottom: none !important;
 	padding: 8px 0;
+	background: transparent !important;
 }
 
 .crystal-settings-section .setting-item:first-of-type {
@@ -3626,6 +3680,13 @@
 	padding: 16px;
 	background: var(--background-secondary);
 	border-radius: 0 0 8px 8px;
+}
+
+.crystal-collapsible-content .setting-item {
+	border: none !important;
+	border-top: none !important;
+	border-bottom: none !important;
+	background: transparent !important;
 }
 
 /* CLI status badge - simple checkmark */
