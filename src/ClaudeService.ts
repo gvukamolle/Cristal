@@ -266,8 +266,8 @@ export class ClaudeService extends EventEmitter {
 			if (buffer.trim()) {
 				this.parseLine(buffer, sessionId);
 			}
-			this.emit("complete", { sessionId, code });
 			this.processes.delete(sessionId);
+			this.emit("complete", { sessionId, code });
 		});
 	}
 

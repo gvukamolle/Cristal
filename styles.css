@@ -591,6 +591,11 @@
 	line-height: 1.5;
 	resize: none;
 	overflow-y: hidden;
+	transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.crystal-input:hover:not(:disabled):not(:focus) {
+	border-color: var(--interactive-accent-hover);
 }
 
 .crystal-input:focus {
