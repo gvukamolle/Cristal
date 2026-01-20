@@ -42,6 +42,8 @@ claude-code-permissions-guide.md
 compass_artifact_wf*.md
 skills-structure-guide.md
 plugin.gitignore.bak
+compass_artifact_wf-4f15d470-c991-40f9-9e52-a152d4504f6f_text_markdown.md
+compass_artifact_wf-216b668d-68df-47f7-b608-e12c25d18039_text_markdown.md
 
 # Development files (not needed for plugin users)
 CLAUDE.md

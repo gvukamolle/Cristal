@@ -3,7 +3,7 @@
 	"name": "Crystal",
 	"version": "1.0.0",
 	"minAppVersion": "1.4.0",
-	"description": "Universal LLM CLI integration for Obsidian",
+	"description": "Claude Code CLI integration for Obsidian notes",
 	"author": "Timofey Grushko",
 	"authorUrl": "https://github.com/gvukamolle",
 	"isDesktopOnly": true
