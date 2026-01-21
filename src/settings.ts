@@ -77,8 +77,8 @@ export class CrystalSettingTab extends PluginSettingTab {
 		});
 		setIcon(checkBtn.createSpan({ cls: "crystal-btn-icon-left" }), "refresh-cw");
 
-		checkBtn.addEventListener("click", async () => {
-			await this.loadAccountLimits(limitsContainer);
+		checkBtn.addEventListener("click", () => {
+			void this.loadAccountLimits(limitsContainer);
 		});
 	}
 
@@ -177,7 +177,7 @@ export class CrystalSettingTab extends PluginSettingTab {
 		// Progress bar
 		const barContainer = row.createDiv({ cls: "crystal-progress-bar" });
 		const fill = barContainer.createDiv({ cls: "crystal-progress-fill" });
-		fill.style.width = `${Math.min(100, Math.max(0, percent))}%`;
+		fill.setCssProps({ width: `${Math.min(100, Math.max(0, percent))}%` });
 
 		// Color based on usage
 		if (percent >= 90) {
@@ -563,14 +563,15 @@ export class CrystalSettingTab extends PluginSettingTab {
 			setIcon(downloadIcon, "download");
 			installBtn.createSpan({ text: this.locale.startIntegration || "Open terminal and install CLI" });
 
-			installBtn.addEventListener("click", async () => {
+			installBtn.addEventListener("click", () => {
 				// Check if Node.js is installed before opening terminal
-				const nodeStatus = await checkNodeInstalled(this.plugin.settings.simulateNodeMissing);
-				if (nodeStatus.installed) {
-					this.launchCommand(installCmd);
-				} else {
-					this.showNodeInstallInstructions(contentArea);
-				}
+				void checkNodeInstalled(this.plugin.settings.simulateNodeMissing).then((nodeStatus) => {
+					if (nodeStatus.installed) {
+						this.launchCommand(installCmd);
+					} else {
+						this.showNodeInstallInstructions(contentArea);
+					}
+				});
 			});
 		}
 	}
@@ -674,7 +675,7 @@ export class CrystalSettingTab extends PluginSettingTab {
 						this.plugin.skillLoader,
 						this.plugin.settings.language,
 						async (skillId: string) => {
-							await this.plugin.skillLoader.refresh();
+							this.plugin.skillLoader.refresh();
 							new Notice(this.locale.skillCreatedSuccess?.replace("{name}", skillId) || `Skill "${skillId}" created`);
 							this.display();
 						}
@@ -717,7 +718,7 @@ export class CrystalSettingTab extends PluginSettingTab {
 					await this.plugin.saveSettings();
 
 					// Sync skills to CLI directory
-					await this.plugin.skillLoader?.syncSkillsForAgent(
+					this.plugin.skillLoader?.syncSkillsForAgent(
 						agent.cliType,
 						agent.enabledSkills || []
 					);
@@ -739,8 +740,8 @@ export class CrystalSettingTab extends PluginSettingTab {
 							this.plugin.settings.language,
 							async () => {
 								// On save - refresh and sync
-								await this.plugin.skillLoader.refresh();
-								await this.plugin.syncAllAgentSkills();
+								this.plugin.skillLoader.refresh();
+								this.plugin.syncAllAgentSkills();
 								this.display();
 							},
 							async (deletedSkillId: string) => {
@@ -751,8 +752,8 @@ export class CrystalSettingTab extends PluginSettingTab {
 									}
 								}
 								await this.plugin.saveSettings();
-								await this.plugin.skillLoader.refresh();
-								await this.plugin.syncAllAgentSkills();
+								this.plugin.skillLoader.refresh();
+								this.plugin.syncAllAgentSkills();
 								this.display();
 							}
 						).open();
@@ -899,7 +900,7 @@ export class CrystalSettingTab extends PluginSettingTab {
 
 	private calculateUsageStats(): { todayTokens: number; weekTokens: number; monthTokens: number } {
 		const now = new Date();
-		const todayStr = now.toISOString().split("T")[0] as string;
+		const todayStr = now.toISOString().split("T")[0];
 
 		// Week start (Monday)
 		const weekStart = new Date(now);
@@ -1362,8 +1363,8 @@ export class CrystalSettingTab extends PluginSettingTab {
 			const refreshBtn = statusRow.createEl("button", { cls: "crystal-refresh-btn" });
 			setIcon(refreshBtn, "refresh-cw");
 			refreshBtn.setAttribute("aria-label", this.locale.refreshButton);
-			refreshBtn.addEventListener("click", async () => {
-				await this.renderCliStatusContent(container, badge, agent);
+			refreshBtn.addEventListener("click", () => {
+				void this.renderCliStatusContent(container, badge, agent);
 			});
 
 			// Terminal button
@@ -1408,13 +1409,14 @@ export class CrystalSettingTab extends PluginSettingTab {
 			setIcon(downloadIcon, "download");
 			installBtn.createSpan({ text: this.locale.startIntegration || "Open terminal and install CLI" });
 
-			installBtn.addEventListener("click", async () => {
-				const nodeStatus = await checkNodeInstalled(this.plugin.settings.simulateNodeMissing);
-				if (nodeStatus.installed) {
-					this.launchCommand(installCmd);
-				} else {
-					this.showNodeInstallInstructions(container);
-				}
+			installBtn.addEventListener("click", () => {
+				void checkNodeInstalled(this.plugin.settings.simulateNodeMissing).then((nodeStatus) => {
+					if (nodeStatus.installed) {
+						this.launchCommand(installCmd);
+					} else {
+						this.showNodeInstallInstructions(container);
+					}
+				});
 			});
 		}
 	}
@@ -1589,7 +1591,7 @@ class SkillsManagementModal extends Modal {
 						this.plugin.skillLoader,
 						this.plugin.settings.language,
 						async (skillId: string) => {
-							await this.plugin.skillLoader.refresh();
+							this.plugin.skillLoader.refresh();
 							new Notice(this.locale.skillCreatedSuccess?.replace("{name}", skillId) || `Skill "${skillId}" created`);
 							this.onOpen();
 							this.onSave();
@@ -1634,7 +1636,7 @@ class SkillsManagementModal extends Modal {
 						agent.enabledSkills = agent.enabledSkills.filter(id => id !== skill.id);
 					}
 					await this.plugin.saveSettings();
-					await this.plugin.skillLoader?.syncSkillsForAgent(
+					this.plugin.skillLoader?.syncSkillsForAgent(
 						agent.cliType,
 						agent.enabledSkills || []
 					);
@@ -1654,8 +1656,8 @@ class SkillsManagementModal extends Modal {
 							fullSkill,
 							this.plugin.settings.language,
 							async () => {
-								await this.plugin.skillLoader.refresh();
-								await this.plugin.syncAllAgentSkills();
+								this.plugin.skillLoader.refresh();
+								this.plugin.syncAllAgentSkills();
 								this.onOpen();
 								this.onSave();
 							},
@@ -1666,8 +1668,8 @@ class SkillsManagementModal extends Modal {
 									}
 								}
 								await this.plugin.saveSettings();
-								await this.plugin.skillLoader.refresh();
-								await this.plugin.syncAllAgentSkills();
+								this.plugin.skillLoader.refresh();
+								this.plugin.syncAllAgentSkills();
 								this.onOpen();
 								this.onSave();
 							}
@@ -1772,8 +1774,8 @@ class CommandModal extends Modal {
 			text: this.locale.saveButton,
 			cls: "mod-cta"
 		});
-		saveBtn.addEventListener("click", async () => {
-			await this.save(promptTextarea.value);
+		saveBtn.addEventListener("click", () => {
+			void this.save(promptTextarea.value);
 		});
 	}
 
@@ -1992,7 +1994,7 @@ class AgentPersonalizationModal extends Modal {
 			text: this.locale.saveButton,
 			cls: "mod-cta"
 		});
-		saveBtn.addEventListener("click", async () => {
+		saveBtn.addEventListener("click", () => {
 			this.plugin.settings.agentPersonalization = {
 				userName: nameInput.value.trim(),
 				userRole: roleInput.value.trim(),
@@ -2000,9 +2002,10 @@ class AgentPersonalizationModal extends Modal {
 				communicationStyle: styleTextarea.value.trim(),
 				currentFocus: focusTextarea.value.trim()
 			};
-			await this.plugin.saveSettings();
-			this.onSave();
-			this.close();
+			void this.plugin.saveSettings().then(() => {
+				this.onSave();
+				this.close();
+			});
 		});
 	}
 
@@ -2343,11 +2346,12 @@ class DebugModeConfirmModal extends Modal {
 			text: "Да, мне надо",
 			cls: "mod-cta"
 		});
-		confirmBtn.addEventListener("click", async () => {
+		confirmBtn.addEventListener("click", () => {
 			this.plugin.settings.debugModeEnabled = true;
-			await this.plugin.saveSettings();
-			this.onConfirm();
-			this.close();
+			void this.plugin.saveSettings().then(() => {
+				this.onConfirm();
+				this.close();
+			});
 		});
 	}
 

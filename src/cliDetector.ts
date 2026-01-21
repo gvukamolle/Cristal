@@ -29,7 +29,7 @@ function getCandidatePaths(): string[] {
 	const platform = process.platform;
 
 	switch (platform) {
-		case "darwin": // macOS
+		case "darwin": { // macOS
 			return [
 				path.join(homeDir, ".local/bin/claude"),  // User local binaries
 				"/usr/local/bin/claude",
@@ -37,13 +37,15 @@ function getCandidatePaths(): string[] {
 				path.join(homeDir, ".npm/bin/claude"),
 				path.join(homeDir, ".nvm/versions/node"),  // NVM - will check subdirs
 			];
-		case "win32": // Windows
+		}
+		case "win32": { // Windows
 			const appData = process.env.APPDATA || path.join(homeDir, "AppData/Roaming");
 			return [
 				path.join(appData, "npm/claude.cmd"),
 				"C:\\Program Files\\nodejs\\claude.cmd",
 			];
-		case "linux":
+		}
+		case "linux": {
 			return [
 				path.join(homeDir, ".local/bin/claude"),  // User local binaries
 				"/usr/local/bin/claude",
@@ -51,6 +53,7 @@ function getCandidatePaths(): string[] {
 				path.join(homeDir, ".npm/bin/claude"),
 				path.join(homeDir, ".nvm/versions/node"),  // NVM - will check subdirs
 			];
+		}
 		default:
 			return [];
 	}

@@ -38,11 +38,11 @@ export default class CrystalPlugin extends Plugin {
 
 		// Initialize skill loader
 		this.skillLoader = new SkillLoader(this.app.vault);
-		await this.skillLoader.initialize();
+		this.skillLoader.initialize();
 		console.debug(`Crystal: Loaded ${this.skillLoader.getSkillReferences().length} skills`);
 
 		// Sync skills for all agents on startup
-		await this.syncAllAgentSkills();
+		this.syncAllAgentSkills();
 
 		// Register the chat view (check if already registered for hot reload)
 		// @ts-ignore - viewRegistry is not in public API but exists
@@ -89,8 +89,8 @@ export default class CrystalPlugin extends Plugin {
 					this.skillLoader,
 					this.settings.language,
 					async (skillId: string) => {
-						await this.skillLoader.refresh();
-						await this.syncAllAgentSkills();
+						this.skillLoader.refresh();
+						this.syncAllAgentSkills();
 						new Notice(`Skill "${skillId}" created successfully`);
 					}
 				).open();
@@ -125,8 +125,8 @@ export default class CrystalPlugin extends Plugin {
 			id: "refresh-skills",
 			name: "Refresh skills",
 			callback: async () => {
-				await this.skillLoader.refresh();
-				await this.syncAllAgentSkills();
+				this.skillLoader.refresh();
+				this.syncAllAgentSkills();
 				const count = this.skillLoader.getSkillReferences().length;
 				new Notice(`Skills refreshed. Found ${count} skills.`);
 			}
@@ -469,7 +469,9 @@ export default class CrystalPlugin extends Plugin {
 	addTokensToHistory(tokens: number): void {
 		if (tokens <= 0) return;
 
-		const today = new Date().toISOString().split("T")[0] as string;
+		const parts = new Date().toISOString().split("T");
+		const today = parts[0];
+		if (!today) return;
 		if (!this.settings.tokenHistory) {
 			this.settings.tokenHistory = {};
 		}
@@ -490,14 +492,14 @@ export default class CrystalPlugin extends Plugin {
 	/**
 	 * Sync skills for all Claude agents
 	 */
-	async syncAllAgentSkills(): Promise<void> {
+	syncAllAgentSkills(): void {
 		if (!this.skillLoader) return;
 
 		for (const agent of this.settings.agents) {
 			if (agent.cliType === "claude") {
 				const enabledSkills = agent.enabledSkills || [];
 				if (enabledSkills.length > 0) {
-					await this.skillLoader.syncSkillsForAgent(agent.cliType, enabledSkills);
+					this.skillLoader.syncSkillsForAgent(agent.cliType, enabledSkills);
 				}
 			}
 		}

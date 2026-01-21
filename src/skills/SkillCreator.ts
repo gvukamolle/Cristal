@@ -7,7 +7,7 @@ import { SkillParser } from "./SkillParser";
 import { getSettingsLocale, type SettingsLocale } from "../settingsLocales";
 import type { LanguageCode } from "../systemPrompts";
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
+// eslint-disable-next-line @typescript-eslint/no-require-imports -- electron requires dynamic import in Obsidian context
 const { shell } = require("electron") as { shell: { openPath: (path: string) => Promise<string> } };
 
 /**
@@ -68,7 +68,7 @@ export class CreateSkillModal extends Modal {
 			.addText(text => {
 				this.descInput = text;
 				text.setPlaceholder(this.locale.skillDescriptionPlaceholder || 'Describe what this skill does...');
-				text.inputEl.style.width = '100%';
+				text.inputEl.setCssProps({ width: '100%' });
 			});
 
 		// Optional folders section
@@ -334,7 +334,7 @@ export class EditSkillModal extends Modal {
 			.setDesc(this.locale.skillDescriptionFieldDesc || 'Detailed description for triggering')
 			.addText(text => {
 				text.setValue(this.skill.metadata.description);
-				text.inputEl.style.width = '100%';
+				text.inputEl.setCssProps({ width: '100%' });
 				text.inputEl.dataset.field = 'description';
 			});
 
@@ -480,11 +480,11 @@ export class EditSkillModal extends Modal {
 		fileInput.multiple = true;
 		fileInput.classList.add('crystal-hidden');
 
-		fileInput.addEventListener('change', async () => {
+		fileInput.addEventListener('change', () => {
 			const files = fileInput.files;
 			if (!files || files.length === 0) return;
 
-			try {
+			const processFiles = async (): Promise<void> => {
 				// Copy selected files to resource folder
 				for (const file of Array.from(files)) {
 					const destPath = path.join(targetDir, file.name);
@@ -493,9 +493,11 @@ export class EditSkillModal extends Modal {
 					const buffer = await file.arrayBuffer();
 					fs.writeFileSync(destPath, Buffer.from(buffer));
 				}
+			};
 
+			void processFiles().then(() => {
 				// Refresh skill data and re-render
-				await this.skillLoader.refresh();
+				this.skillLoader.refresh();
 				const updatedSkill = this.skillLoader.getSkill(this.skill.id);
 				if (updatedSkill) {
 					this.skill = updatedSkill;
@@ -503,13 +505,13 @@ export class EditSkillModal extends Modal {
 				}
 
 				new Notice(this.locale.filesAdded || 'Files added successfully');
-			} catch (error) {
+			}).catch((error) => {
 				console.error('Failed to add files:', error);
 				new Notice(this.locale.filesAddFailed || 'Failed to add files');
-			}
-
-			// Clean up
-			fileInput.remove();
+			}).finally(() => {
+				// Clean up
+				fileInput.remove();
+			});
 		});
 
 		document.body.appendChild(fileInput);

@@ -288,10 +288,10 @@ export class CrystalChatView extends ItemView {
 		this.fileInputEl.addClass("crystal-hidden");
 
 		attachBtn.addEventListener("click", () => this.fileInputEl.click());
-		this.fileInputEl.addEventListener("change", async (e: Event) => {
+		this.fileInputEl.addEventListener("change", (e: Event) => {
 			const target = e.target as HTMLInputElement;
 			if (target.files && target.files.length > 0 && target.files[0]) {
-				await this.handleFileAttachment(target.files[0]);
+				void this.handleFileAttachment(target.files[0]);
 				target.value = "";
 			}
 		});
@@ -877,7 +877,7 @@ export class CrystalChatView extends ItemView {
 	}
 
 	// Compact feature methods
-	private async runCompact(): Promise<void> {
+	private runCompact(): void {
 		// Check if there are messages to summarize
 		if (this.messages.length === 0) {
 			return;
@@ -1971,7 +1971,7 @@ Provide only the summary, no additional commentary.`;
 			if (commandPrompt) {
 				// Handle special /compact command
 				if (commandPrompt === "__COMPACT__") {
-					await this.runCompact();
+					this.runCompact();
 					return;
 				}
 				// Handle special /attach command
@@ -2479,9 +2479,8 @@ Provide only the summary, no additional commentary.`;
 		});
 		setIcon(copyBtn, "copy");
 
-		copyBtn.addEventListener("click", async () => {
-			try {
-				await navigator.clipboard.writeText(content);
+		copyBtn.addEventListener("click", () => {
+			void navigator.clipboard.writeText(content).then(() => {
 				// Show success feedback
 				copyBtn.empty();
 				setIcon(copyBtn, "check");
@@ -2495,9 +2494,9 @@ Provide only the summary, no additional commentary.`;
 					copyBtn.setAttribute("title", locale.copy);
 					copyBtn.removeClass("crystal-action-btn-success");
 				}, 2000);
-			} catch (err) {
+			}).catch((err) => {
 				console.error("Failed to copy:", err);
-			}
+			});
 		});
 
 		// Replace button (icon-only)
@@ -2507,8 +2506,8 @@ Provide only the summary, no additional commentary.`;
 		});
 		setIcon(replaceBtn, "replace");
 
-		replaceBtn.addEventListener("click", async () => {
-			await this.replaceNoteContent(content, replaceBtn, locale, selectionContext);
+		replaceBtn.addEventListener("click", () => {
+			void this.replaceNoteContent(content, replaceBtn, locale, selectionContext);
 		});
 
 		// Append button (icon-only)
@@ -2518,8 +2517,8 @@ Provide only the summary, no additional commentary.`;
 		});
 		setIcon(appendBtn, "file-plus");
 
-		appendBtn.addEventListener("click", async () => {
-			await this.appendToNote(content, appendBtn, locale, selectionContext);
+		appendBtn.addEventListener("click", () => {
+			void this.appendToNote(content, appendBtn, locale, selectionContext);
 		});
 
 		// New Page button (icon-only)
@@ -2529,8 +2528,8 @@ Provide only the summary, no additional commentary.`;
 		});
 		setIcon(newPageBtn, "file-plus-2");
 
-		newPageBtn.addEventListener("click", async () => {
-			await this.createNewPageWithContent(content, newPageBtn, locale);
+		newPageBtn.addEventListener("click", () => {
+			void this.createNewPageWithContent(content, newPageBtn, locale);
 		});
 
 		// Update visibility based on active file
@@ -2548,9 +2547,8 @@ Provide only the summary, no additional commentary.`;
 		});
 		setIcon(copyBtn, "copy");
 
-		copyBtn.addEventListener("click", async () => {
-			try {
-				await navigator.clipboard.writeText(content);
+		copyBtn.addEventListener("click", () => {
+			void navigator.clipboard.writeText(content).then(() => {
 				// Show success feedback
 				copyBtn.empty();
 				setIcon(copyBtn, "check");
@@ -2564,9 +2562,9 @@ Provide only the summary, no additional commentary.`;
 					copyBtn.setAttribute("title", locale.copy);
 					copyBtn.removeClass("crystal-action-btn-success");
 				}, 2000);
-			} catch (err) {
+			}).catch((err) => {
 				console.error("Failed to copy:", err);
-			}
+			});
 		});
 
 		// Edit button (icon-only)
@@ -3551,13 +3549,13 @@ Provide only the summary, no additional commentary.`;
 
 	private autoResizeInput(): void {
 		// Reset height to auto to get correct scrollHeight
-		this.inputEl.style.height = "auto";
+		this.inputEl.setCssProps({ height: "auto" });
 		// Set height based on content, respecting max-height from CSS
 		const maxHeight = 200;
 		const newHeight = Math.min(this.inputEl.scrollHeight, maxHeight);
-		this.inputEl.style.height = newHeight + "px";
+		this.inputEl.setCssProps({ height: `${newHeight}px` });
 		// Show scrollbar if content exceeds max height
-		this.inputEl.style.overflowY = this.inputEl.scrollHeight > maxHeight ? "auto" : "hidden";
+		this.inputEl.setCssProps({ "overflow-y": this.inputEl.scrollHeight > maxHeight ? "auto" : "hidden" });
 	}
 
 	private handleInputChange(): void {
@@ -4061,9 +4059,8 @@ Provide only the summary, no additional commentary.`;
 			attr: { "aria-label": locale.copy, "title": locale.copy }
 		});
 		setIcon(copyBtn, "copy");
-		copyBtn.addEventListener("click", async () => {
-			try {
-				await navigator.clipboard.writeText(content);
+		copyBtn.addEventListener("click", () => {
+			void navigator.clipboard.writeText(content).then(() => {
 				copyBtn.empty();
 				setIcon(copyBtn, "check");
 				copyBtn.setAttribute("title", locale.copySuccess);
@@ -4074,9 +4071,9 @@ Provide only the summary, no additional commentary.`;
 					copyBtn.setAttribute("title", locale.copy);
 					copyBtn.removeClass("crystal-action-btn-success");
 				}, 2000);
-			} catch (err) {
+			}).catch((err) => {
 				console.error("Failed to copy:", err);
-			}
+			});
 		});
 
 		// Edit button
@@ -4117,11 +4114,11 @@ Provide only the summary, no additional commentary.`;
 		textarea.value = content;
 
 		// Auto-resize
-		textarea.style.height = "auto";
-		textarea.style.height = textarea.scrollHeight + "px";
+		textarea.setCssProps({ height: "auto" });
+		textarea.setCssProps({ height: `${textarea.scrollHeight}px` });
 		textarea.addEventListener("input", () => {
-			textarea.style.height = "auto";
-			textarea.style.height = textarea.scrollHeight + "px";
+			textarea.setCssProps({ height: "auto" });
+			textarea.setCssProps({ height: `${textarea.scrollHeight}px` });
 		});
 
 		// Action buttons

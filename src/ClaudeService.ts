@@ -14,7 +14,7 @@ export class ClaudeService extends EventEmitter {
 	private pendingMessages: Map<string, PendingMessage> = new Map();
 	private cliPath: string;
 	private workingDir: string;
-	private configDir: string = ".obsidian"; // Obsidian config folder (can be customized by user)
+	private configDir: string = ""; // Obsidian config folder (set via setConfigDir from vault.configDir)
 	private permissions: ClaudePermissions;
 	private debug = true; // DEBUG MODE: Check DevTools for usage data
 
@@ -69,7 +69,7 @@ export class ClaudeService extends EventEmitter {
 	}
 
 	setConfigDir(dir: string): void {
-		this.configDir = dir;
+		this.configDir = dir || ".obsidian"; // Fallback to default if empty
 	}
 
 	setPermissions(permissions: ClaudePermissions): void {

@@ -44,9 +44,9 @@ export class SkillLoader {
 	/**
 	 * Initialize by loading all skills
 	 */
-	async initialize(): Promise<void> {
+	initialize(): void {
 		this.loadBuiltinSkills();
-		await this.discoverVaultSkills();
+		this.discoverVaultSkills();
 	}
 
 	/**
@@ -75,7 +75,7 @@ export class SkillLoader {
 	 * Discover custom skills in vault's .crystal/skills/ folder
 	 * Uses file system directly since Obsidian cache may not be updated
 	 */
-	async discoverVaultSkills(): Promise<void> {
+	discoverVaultSkills(): void {
 		this.vaultSkills.clear();
 
 		const adapter = this.vault.adapter;
@@ -282,8 +282,8 @@ export class SkillLoader {
 	/**
 	 * Refresh vault skills (call when files change)
 	 */
-	async refresh(): Promise<void> {
-		await this.discoverVaultSkills();
+	refresh(): void {
+		this.discoverVaultSkills();
 	}
 
 	/**
@@ -343,7 +343,7 @@ export class SkillLoader {
 	 * Sync enabled skills to CLI-specific directories
 	 * Now copies entire skill structure including scripts/, references/, assets/
 	 */
-	async syncSkillsForAgent(cliType: CLIType, enabledSkillIds: string[]): Promise<void> {
+	syncSkillsForAgent(cliType: CLIType, enabledSkillIds: string[]): void {
 		const adapter = this.vault.adapter;
 		if (!(adapter instanceof FileSystemAdapter)) {
 			console.warn("SkillLoader: Cannot sync skills - not a file system adapter");
