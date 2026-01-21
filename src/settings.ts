@@ -774,41 +774,32 @@ export class CrystalSettingTab extends PluginSettingTab {
 	}
 
 	/**
-	 * Debug/Testing section (collapsible)
+	 * Debug/Testing section
 	 */
 	private displayDebugSection(containerEl: HTMLElement): void {
-		const section = containerEl.createDiv({ cls: "crystal-collapsible-section" });
+		const section = containerEl.createDiv({ cls: "crystal-settings-section" });
 
-		// Header
-		const header = section.createDiv({ cls: "crystal-collapsible-header" });
-		const chevron = header.createSpan({ cls: "crystal-collapsible-chevron" });
-		setIcon(chevron, "chevron-right");
-		header.createSpan({ cls: "crystal-collapsible-title", text: "🧪 Debug/Testing" });
-
-		// Content (hidden by default)
-		const content = section.createDiv({ cls: "crystal-collapsible-content" });
-		content.hide();
+		// Section heading
+		new Setting(section).setName(this.locale.debugSection).setHeading();
 
 		// Simulate Node.js missing toggle
-		new Setting(content)
-			.setName("Simulate Node.js missing")
-			.setDesc("Show Node.js installation instructions even if Node.js is installed (for testing UI)")
+		new Setting(section)
+			.setName(this.locale.simulateNodeMissing)
+			.setDesc(this.locale.simulateNodeMissingDesc)
 			.addToggle(toggle => toggle
 				.setValue(this.plugin.settings.simulateNodeMissing || false)
 				.onChange(async (value) => {
 					this.plugin.settings.simulateNodeMissing = value;
 					await this.plugin.saveSettings();
-
-					// Refresh settings tab to apply changes
 					this.display();
 				}));
 
 		// Exit debug mode button
-		new Setting(content)
-			.setName("Выйти из Debug Mode")
-			.setDesc("Отключить режим отладки и скрыть эту секцию")
+		new Setting(section)
+			.setName(this.locale.exitDebugMode)
+			.setDesc(this.locale.exitDebugModeDesc)
 			.addButton(btn => btn
-				.setButtonText("Выйти")
+				.setButtonText(this.locale.exitButton)
 				.setWarning()
 				.onClick(async () => {
 					this.plugin.settings.debugModeEnabled = false;
@@ -816,14 +807,6 @@ export class CrystalSettingTab extends PluginSettingTab {
 					await this.plugin.saveSettings();
 					this.display();
 				}));
-
-		// Toggle logic
-		header.addEventListener("click", () => {
-			const isHidden = content.hasClass("crystal-hidden");
-			content.toggleClass("crystal-hidden", !isHidden);
-			chevron.empty();
-			setIcon(chevron, isHidden ? "chevron-down" : "chevron-right");
-		});
 	}
 
 	private displaySlashCommandsSection(containerEl: HTMLElement): void {
@@ -1107,11 +1090,13 @@ export class CrystalSettingTab extends PluginSettingTab {
 		const agent = this.plugin.getAgentByCliType("claude");
 		if (!agent) return;
 
+		const section = containerEl.createDiv({ cls: "crystal-settings-section" });
+
 		// Section heading
-		new Setting(containerEl).setName(this.locale.permissionsSection).setHeading();
+		new Setting(section).setName(this.locale.permissionsSection).setHeading();
 
 		// Render permissions content
-		this.renderPermissionsContent(containerEl, agent);
+		this.renderPermissionsContent(section, agent);
 	}
 
 	/**
@@ -1263,7 +1248,7 @@ export class CrystalSettingTab extends PluginSettingTab {
 	}
 
 	/**
-	 * Collapsible CLI status section
+	 * CLI status section
 	 */
 	private displayCliStatusCollapsible(containerEl: HTMLElement): void {
 		const agent = this.plugin.getAgentByCliType("claude");
@@ -1276,119 +1261,106 @@ export class CrystalSettingTab extends PluginSettingTab {
 			void this.plugin.saveSettings();
 		}
 
-		// Section heading with status badge
-		const headingSetting = new Setting(containerEl).setName(this.locale.cliStatusSection).setHeading();
-		const statusBadge = headingSetting.nameEl.createSpan({ cls: "crystal-cli-badge" });
+		const section = containerEl.createDiv({ cls: "crystal-settings-section" });
 
-		// Content container
-		const content = containerEl.createDiv({ cls: "crystal-cli-status-content" });
+		// Section heading
+		new Setting(section).setName(this.locale.cliStatusSection).setHeading();
+
+		// Content container for dynamic status
+		const content = section.createDiv({ cls: "crystal-cli-status-content" });
 
 		// Render CLI status content
-		void this.renderCliStatusContent(content, statusBadge, agent);
+		void this.renderCliStatusContent(content, agent);
 	}
 
 	/**
-	 * Render CLI status inside container, update badge
+	 * Render CLI status inside container
 	 */
 	private async renderCliStatusContent(
 		container: HTMLElement,
-		badge: HTMLElement,
 		agent: AgentConfig
 	): Promise<void> {
 		container.empty();
-		badge.empty();
-		badge.textContent = "...";
 
 		const status = await checkCLIInstalled(agent.cliPath, this.plugin.settings.simulateNodeMissing);
 
 		if (status.installed) {
-			badge.addClass("success");
-			badge.removeClass("error");
-			// Show checkmark icon in badge
-			setIcon(badge, "check");
-
-			// In expanded view - text with refresh button
-			const statusRow = container.createDiv({ cls: "crystal-cli-status-row" });
-			const versionText = statusRow.createEl("p", { cls: "crystal-settings-note" });
-
-			// Parse version text and make entire version clickable
 			const versionStr = status.version || "?";
-			const fullText = this.locale.cliFound.replace("{version}", versionStr);
-			const versionParts = fullText.split(versionStr);
 
-			versionText.appendText(versionParts[0] || "");
+			// CLI status setting with version and refresh button
+			const statusSetting = new Setting(container)
+				.setName(this.locale.cliFound.replace("{version}", versionStr))
+				.addButton(btn => btn
+					.setIcon("refresh-cw")
+					.setTooltip(this.locale.refreshButton)
+					.onClick(() => {
+						void this.renderCliStatusContent(container, agent);
+					}));
 
-			// Make entire version clickable (Easter egg for debug mode)
-			const versionLink = versionText.createEl("span", {
-				text: versionStr,
-				cls: "crystal-debug-trigger"
-			});
-			versionLink.addEventListener("click", (e) => {
-				e.stopPropagation();
+			// Add success icon to name
+			const successIcon = statusSetting.nameEl.createSpan({ cls: "crystal-status-icon success" });
+			setIcon(successIcon, "check");
+			statusSetting.nameEl.prepend(successIcon);
+
+			// Make version clickable (Easter egg for debug mode)
+			statusSetting.nameEl.addClass("crystal-debug-trigger");
+			statusSetting.nameEl.addEventListener("click", (e) => {
+				if ((e.target as HTMLElement).closest("button")) return;
 				new DebugModeConfirmModal(this.app, this.plugin, () => this.display()).open();
 			});
 
-			versionText.appendText(versionParts[1] || "");
-
-			// Refresh button
-			const refreshBtn = statusRow.createEl("button", { cls: "crystal-refresh-btn" });
-			setIcon(refreshBtn, "refresh-cw");
-			refreshBtn.setAttribute("aria-label", this.locale.refreshButton);
-			refreshBtn.addEventListener("click", () => {
-				void this.renderCliStatusContent(container, badge, agent);
-			});
-
-			// Terminal button
-			const terminalSection = container.createDiv({ cls: "crystal-cli-terminal-section" });
-			terminalSection.createEl("p", {
-				cls: "crystal-settings-note crystal-terminal-desc",
-				text: this.locale.openTerminalDesc || "Open system terminal with Claude Code"
-			});
-
-			const terminalBtn = terminalSection.createEl("button", { cls: "mod-cta" });
-			const terminalIcon = terminalBtn.createSpan({ cls: "crystal-btn-icon-left" });
-			setIcon(terminalIcon, "terminal");
-			terminalBtn.createSpan({ text: this.locale.openTerminal || "Open terminal" });
-			terminalBtn.addEventListener("click", () => {
-				this.launchCommand("claude");
-			});
+			// Terminal button setting
+			new Setting(container)
+				.setName(this.locale.openTerminal || "Open terminal")
+				.setDesc(this.locale.openTerminalDesc || "Open system terminal with Claude Code")
+				.addButton(btn => btn
+					.setIcon("terminal")
+					.setCta()
+					.onClick(() => {
+						this.launchCommand("claude");
+					}));
 		} else {
-			badge.addClass("error");
-			badge.removeClass("success");
-			setIcon(badge, "x");
+			// Error status
+			const errorSetting = new Setting(container)
+				.setName(this.locale.cliNotFound)
+				.addButton(btn => btn
+					.setIcon("refresh-cw")
+					.setTooltip(this.locale.refreshButton)
+					.onClick(() => {
+						void this.renderCliStatusContent(container, agent);
+					}));
 
-			const errorEl = container.createDiv({ cls: "crystal-cli-status-item crystal-cli-status-error" });
-			const iconSpan = errorEl.createSpan({ cls: "crystal-cli-status-icon" });
-			setIcon(iconSpan, "x-circle");
-			errorEl.createSpan({ text: this.locale.cliNotFound });
+			// Add error icon to name
+			const errorIcon = errorSetting.nameEl.createSpan({ cls: "crystal-status-icon error" });
+			setIcon(errorIcon, "x-circle");
+			errorSetting.nameEl.prepend(errorIcon);
 
 			// Installation hint
 			const installCmd = "npm i -g @anthropic-ai/claude-code";
-			const installHint = container.createDiv({ cls: "crystal-install-hint" });
-			installHint.createEl("p", {
+			container.createEl("p", {
 				cls: "crystal-settings-note",
 				text: this.locale.installWith + ":"
 			});
-			installHint.createEl("code", {
+			container.createEl("code", {
 				cls: "crystal-install-command",
 				text: installCmd
 			});
 
-			// Install button
-			const installBtn = container.createEl("button", { cls: "mod-cta" });
-			const downloadIcon = installBtn.createSpan({ cls: "crystal-btn-icon-left" });
-			setIcon(downloadIcon, "download");
-			installBtn.createSpan({ text: this.locale.startIntegration || "Open terminal and install CLI" });
-
-			installBtn.addEventListener("click", () => {
-				void checkNodeInstalled(this.plugin.settings.simulateNodeMissing).then((nodeStatus) => {
-					if (nodeStatus.installed) {
-						this.launchCommand(installCmd);
-					} else {
-						this.showNodeInstallInstructions(container);
-					}
-				});
-			});
+			// Install button setting
+			new Setting(container)
+				.setName(this.locale.startIntegration || "Install CLI")
+				.addButton(btn => btn
+					.setIcon("download")
+					.setCta()
+					.onClick(() => {
+						void checkNodeInstalled(this.plugin.settings.simulateNodeMissing).then((nodeStatus) => {
+							if (nodeStatus.installed) {
+								this.launchCommand(installCmd);
+							} else {
+								this.showNodeInstallInstructions(container);
+							}
+						});
+					}));
 		}
 	}
 }

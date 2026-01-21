@@ -281,6 +281,14 @@ export interface SettingsLocale {
 	skillsModalTitle: string;
 	permissionsSection: string;
 	cliStatusSection: string;
+
+	// Debug section
+	debugSection: string;
+	simulateNodeMissing: string;
+	simulateNodeMissingDesc: string;
+	exitDebugMode: string;
+	exitDebugModeDesc: string;
+	exitButton: string;
 }
 
 export const SETTINGS_LOCALES: Record<LanguageCode, SettingsLocale> = {
@@ -562,7 +570,15 @@ export const SETTINGS_LOCALES: Record<LanguageCode, SettingsLocale> = {
 		commandsModalTitle: "Команды",
 		skillsModalTitle: "Навыки",
 		permissionsSection: "Разрешения",
-		cliStatusSection: "Статус CLI"
+		cliStatusSection: "Статус CLI",
+
+		// Debug section
+		debugSection: "Отладка",
+		simulateNodeMissing: "Симулировать отсутствие Node.js",
+		simulateNodeMissingDesc: "Показывать инструкции по установке Node.js, даже если он установлен (для тестирования UI)",
+		exitDebugMode: "Выйти из режима отладки",
+		exitDebugModeDesc: "Отключить режим отладки и скрыть эту секцию",
+		exitButton: "Выйти"
 	},
 
 	en: {
@@ -843,7 +859,15 @@ export const SETTINGS_LOCALES: Record<LanguageCode, SettingsLocale> = {
 		commandsModalTitle: "Commands",
 		skillsModalTitle: "Skills",
 		permissionsSection: "Permissions",
-		cliStatusSection: "CLI status"
+		cliStatusSection: "CLI status",
+
+		// Debug section
+		debugSection: "Debug",
+		simulateNodeMissing: "Simulate Node.js missing",
+		simulateNodeMissingDesc: "Show Node.js installation instructions even if Node.js is installed (for testing UI)",
+		exitDebugMode: "Exit debug mode",
+		exitDebugModeDesc: "Disable debug mode and hide this section",
+		exitButton: "Exit"
 	},
 
 	fr: {
@@ -1124,7 +1148,15 @@ export const SETTINGS_LOCALES: Record<LanguageCode, SettingsLocale> = {
 		commandsModalTitle: "Commandes",
 		skillsModalTitle: "Compétences",
 		permissionsSection: "Autorisations",
-		cliStatusSection: "Statut CLI"
+		cliStatusSection: "Statut CLI",
+
+		// Debug section
+		debugSection: "Débogage",
+		simulateNodeMissing: "Simuler l'absence de Node.js",
+		simulateNodeMissingDesc: "Afficher les instructions d'installation de Node.js même s'il est installé (pour tester l'interface)",
+		exitDebugMode: "Quitter le mode débogage",
+		exitDebugModeDesc: "Désactiver le mode débogage et masquer cette section",
+		exitButton: "Quitter"
 	},
 
 	de: {
@@ -1405,7 +1437,15 @@ export const SETTINGS_LOCALES: Record<LanguageCode, SettingsLocale> = {
 		commandsModalTitle: "Befehle",
 		skillsModalTitle: "Fähigkeiten",
 		permissionsSection: "Berechtigungen",
-		cliStatusSection: "CLI-Status"
+		cliStatusSection: "CLI-Status",
+
+		// Debug section
+		debugSection: "Debug",
+		simulateNodeMissing: "Node.js-Fehlen simulieren",
+		simulateNodeMissingDesc: "Node.js-Installationsanweisungen anzeigen, auch wenn Node.js installiert ist (zum Testen der Benutzeroberfläche)",
+		exitDebugMode: "Debug-Modus beenden",
+		exitDebugModeDesc: "Debug-Modus deaktivieren und diesen Abschnitt ausblenden",
+		exitButton: "Beenden"
 	},
 
 	es: {
@@ -1688,7 +1728,15 @@ export const SETTINGS_LOCALES: Record<LanguageCode, SettingsLocale> = {
 		commandsModalTitle: "Comandos",
 		skillsModalTitle: "Habilidades",
 		permissionsSection: "Permisos",
-		cliStatusSection: "Estado CLI"
+		cliStatusSection: "Estado CLI",
+
+		// Debug section
+		debugSection: "Depuración",
+		simulateNodeMissing: "Simular ausencia de Node.js",
+		simulateNodeMissingDesc: "Mostrar instrucciones de instalación de Node.js aunque esté instalado (para probar la interfaz)",
+		exitDebugMode: "Salir del modo depuración",
+		exitDebugModeDesc: "Desactivar el modo depuración y ocultar esta sección",
+		exitButton: "Salir"
 	},
 
 	hi: {
@@ -1971,7 +2019,15 @@ export const SETTINGS_LOCALES: Record<LanguageCode, SettingsLocale> = {
 		commandsModalTitle: "कमांड",
 		skillsModalTitle: "स्किल",
 		permissionsSection: "अनुमतियाँ",
-		cliStatusSection: "CLI स्थिति"
+		cliStatusSection: "CLI स्थिति",
+
+		// Debug section
+		debugSection: "डीबग",
+		simulateNodeMissing: "Node.js अनुपस्थिति का अनुकरण करें",
+		simulateNodeMissingDesc: "Node.js स्थापना निर्देश दिखाएं भले ही Node.js स्थापित हो (UI परीक्षण के लिए)",
+		exitDebugMode: "डीबग मोड से बाहर निकलें",
+		exitDebugModeDesc: "डीबग मोड अक्षम करें और इस अनुभाग को छिपाएं",
+		exitButton: "बाहर निकलें"
 	},
 
 	zh: {
@@ -2254,7 +2310,15 @@ export const SETTINGS_LOCALES: Record<LanguageCode, SettingsLocale> = {
 		commandsModalTitle: "命令",
 		skillsModalTitle: "技能",
 		permissionsSection: "权限",
-		cliStatusSection: "CLI 状态"
+		cliStatusSection: "CLI 状态",
+
+		// Debug section
+		debugSection: "调试",
+		simulateNodeMissing: "模拟 Node.js 缺失",
+		simulateNodeMissingDesc: "即使已安装 Node.js 也显示安装说明（用于测试界面）",
+		exitDebugMode: "退出调试模式",
+		exitDebugModeDesc: "禁用调试模式并隐藏此部分",
+		exitButton: "退出"
 	},
 
 	ja: {
@@ -2537,7 +2601,15 @@ export const SETTINGS_LOCALES: Record<LanguageCode, SettingsLocale> = {
 		commandsModalTitle: "コマンド",
 		skillsModalTitle: "スキル",
 		permissionsSection: "権限",
-		cliStatusSection: "CLI ステータス"
+		cliStatusSection: "CLI ステータス",
+
+		// Debug section
+		debugSection: "デバッグ",
+		simulateNodeMissing: "Node.js 不在をシミュレート",
+		simulateNodeMissingDesc: "Node.js がインストールされていても、インストール手順を表示する（UI テスト用）",
+		exitDebugMode: "デバッグモードを終了",
+		exitDebugModeDesc: "デバッグモードを無効にして、このセクションを非表示にする",
+		exitButton: "終了"
 	}
 };
 
