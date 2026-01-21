@@ -58,7 +58,7 @@ export default class CrystalPlugin extends Plugin {
 
 		// Add ribbon icon to open chat
 		this.addRibbonIcon("gem", "Open Crystal", () => {
-			this.activateView();
+			void this.activateView();
 		});
 
 		// Add command to open chat
@@ -88,7 +88,7 @@ export default class CrystalPlugin extends Plugin {
 					this.app,
 					this.skillLoader,
 					this.settings.language,
-					async (skillId: string) => {
+					(skillId: string) => {
 						this.skillLoader.refresh();
 						this.syncAllAgentSkills();
 						new Notice(`Skill "${skillId}" created successfully`);
@@ -149,7 +149,7 @@ export default class CrystalPlugin extends Plugin {
 								const to = editor.getCursor("to");
 								const filePath = view.file?.path || "";
 
-								this.mentionSelectedText(selection, view.file?.basename || "Editor", {
+								void this.mentionSelectedText(selection, view.file?.basename || "Editor", {
 									filePath,
 									startLine: from.line,
 									startCh: from.ch,
@@ -236,7 +236,7 @@ export default class CrystalPlugin extends Plugin {
 
 		// Reveal and focus the leaf
 		if (leaf) {
-			workspace.revealLeaf(leaf);
+			void workspace.revealLeaf(leaf);
 		}
 	}
 

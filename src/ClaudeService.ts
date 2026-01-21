@@ -69,7 +69,7 @@ export class ClaudeService extends EventEmitter {
 	}
 
 	setConfigDir(dir: string): void {
-		this.configDir = dir || ".obsidian"; // Fallback to default if empty
+		this.configDir = dir;
 	}
 
 	setPermissions(permissions: ClaudePermissions): void {
@@ -320,67 +320,61 @@ export class ClaudeService extends EventEmitter {
 	private handleMessage(msg: CLIMessage, sessionId: string): { type: "text"; text: string } | null {
 		switch (msg.type) {
 			case "system": {
-				const sysMsg = msg as InitMessage | CompactBoundaryMessage;
-				if (sysMsg.subtype === "init") {
-					this.cliSessionIds.set(sessionId, sysMsg.session_id);
-					this.log("Init, cliSession:", sysMsg.session_id, "for sessionId:", sessionId);
-					this.emit("init", { sessionId, cliSessionId: sysMsg.session_id });
-				} else if (sysMsg.subtype === "compact_boundary") {
-					const compactMsg = sysMsg as CompactBoundaryMessage;
-					this.log("Compact boundary:", compactMsg.compact_metadata);
+				if (msg.subtype === "init") {
+					this.cliSessionIds.set(sessionId, msg.session_id);
+					this.log("Init, cliSession:", msg.session_id, "for sessionId:", sessionId);
+					this.emit("init", { sessionId, cliSessionId: msg.session_id });
+				} else if (msg.subtype === "compact_boundary") {
+					this.log("Compact boundary:", msg.compact_metadata);
 					this.emit("compact", {
 						sessionId,
-						trigger: compactMsg.compact_metadata.trigger,
-						preTokens: compactMsg.compact_metadata.pre_tokens
+						trigger: msg.compact_metadata.trigger,
+						preTokens: msg.compact_metadata.pre_tokens
 					});
 				}
 				break;
 			}
 
 			case "assistant": {
-				const convMsg = msg as ConversationMessage;
-
 				// Emit tool_use events for each tool use block and store in pending
 				const pending = this.pendingMessages.get(sessionId);
-				for (const block of convMsg.message.content) {
+				for (const block of msg.message.content) {
 					if (block.type === "tool_use") {
 						this.log("Tool use:", block.name);
-						const toolBlock = block as ToolUseBlock;
 						if (pending) {
-							pending.tools.push(toolBlock);
+							pending.tools.push(block);
 						}
-						this.emit("toolUse", { sessionId, tool: toolBlock });
+						this.emit("toolUse", { sessionId, tool: block });
 					}
 				}
 
-				const text = this.extractText(convMsg.message.content);
+				const text = this.extractText(msg.message.content);
 				this.log("Assistant text:", text.substring(0, 50));
 				if (text) {
-					this.emit("assistant", { sessionId, message: convMsg });
+					this.emit("assistant", { sessionId, message: msg });
 					return { type: "text", text };
 				}
 				break;
 			}
 
 			case "result": {
-				const resultMsg = msg as ResultMessage;
-				this.log("Result, is_error:", resultMsg.is_error);
-				this.log("Result raw usage:", JSON.stringify(resultMsg.usage));
+				this.log("Result, is_error:", msg.is_error);
+				this.log("Result raw usage:", JSON.stringify(msg.usage));
 
 				// Check for rate limit in result message
-				if (resultMsg.is_error && resultMsg.result && this.isRateLimitError(resultMsg.result)) {
-					const resetTime = this.parseResetTime(resultMsg.result);
-					this.emit("rateLimitError", { sessionId, resetTime, message: resultMsg.result });
+				if (msg.is_error && msg.result && this.isRateLimitError(msg.result)) {
+					const resetTime = this.parseResetTime(msg.result);
+					this.emit("rateLimitError", { sessionId, resetTime, message: msg.result });
 					return null;
 				}
 
-				if (resultMsg.is_error) {
-					this.emit("error", { sessionId, error: resultMsg.result });
+				if (msg.is_error) {
+					this.emit("error", { sessionId, error: msg.result });
 				}
-				this.emit("result", { sessionId, result: resultMsg });
+				this.emit("result", { sessionId, result: msg });
 
 				// Always emit context update (with defaults if no usage data)
-				const usage = resultMsg.usage ?? {
+				const usage = msg.usage ?? {
 					input_tokens: 0,
 					output_tokens: 0,
 					cache_read_input_tokens: 0,

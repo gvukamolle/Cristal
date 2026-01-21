@@ -114,7 +114,7 @@ export class CreateSkillModal extends Modal {
 			text: this.locale.createSkillButton || 'Create skill',
 			cls: 'mod-cta'
 		});
-		createBtn.addEventListener('click', () => this.createSkill());
+		createBtn.addEventListener('click', () => { void this.createSkill(); });
 	}
 
 	private async createSkill(): Promise<void> {
@@ -400,7 +400,7 @@ export class EditSkillModal extends Modal {
 			text: this.locale.saveButton || 'Save',
 			cls: 'mod-cta'
 		});
-		saveBtn.addEventListener('click', () => this.saveSkill(instructionsTextarea.value));
+		saveBtn.addEventListener('click', () => { void this.saveSkill(instructionsTextarea.value); });
 	}
 
 	private renderResourceSection(
@@ -438,7 +438,7 @@ export class EditSkillModal extends Modal {
 			cls: 'crystal-add-files-btn'
 		});
 		addBtn.addEventListener('click', () => {
-			this.addFilesToResource(type);
+			void this.addFilesToResource(type);
 		});
 
 		// Open folder button
@@ -447,7 +447,7 @@ export class EditSkillModal extends Modal {
 			cls: 'crystal-open-folder-btn'
 		});
 		openBtn.addEventListener('click', () => {
-			this.openResourceFolder(type);
+			void this.openResourceFolder(type);
 		});
 	}
 
@@ -478,7 +478,7 @@ export class EditSkillModal extends Modal {
 		const fileInput = document.createElement('input');
 		fileInput.type = 'file';
 		fileInput.multiple = true;
-		fileInput.classList.add('crystal-hidden');
+		(fileInput as HTMLElement).hide();
 
 		fileInput.addEventListener('change', () => {
 			const files = fileInput.files;
@@ -544,7 +544,7 @@ export class EditSkillModal extends Modal {
 				.replace('{name}', this.skill.metadata.name),
 			this.locale.deleteSkillButton || 'Delete',
 			this.locale.closeButton || 'Cancel',
-			() => this.deleteSkill()
+			() => { void this.deleteSkill(); }
 		).open();
 	}
 

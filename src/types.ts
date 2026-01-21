@@ -216,8 +216,8 @@ export interface AgentConfig {
 	description: string;             // Description
 	enabled: boolean;                // Whether agent is enabled
 	cliPath: string;                 // Path to CLI executable
-	model: string;                   // Default model
-	disabledModels?: string[];       // Models disabled by user (hidden from dropdown)
+	model: ClaudeModel;              // Default model
+	disabledModels?: ClaudeModel[];  // Models disabled by user (hidden from dropdown)
 	// Claude-specific
 	thinkingEnabled?: boolean;       // Extended thinking mode (legacy, use permissions.extendedThinking)
 	permissions?: ClaudePermissions; // Claude permissions

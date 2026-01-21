@@ -1,6 +1,6 @@
 import { App, PluginSettingTab, Setting, Modal, TextComponent, setIcon, Notice } from "obsidian";
 import type CrystalPlugin from "./main";
-import type { SlashCommand, LanguageCode, ClaudeModel, AgentConfig, CLIType, AgentPersonalization } from "./types";
+import type { SlashCommand, LanguageCode, ClaudeModel, AgentConfig } from "./types";
 import { CLAUDE_MODELS, CLI_INFO, DEFAULT_CLAUDE_PERMISSIONS, DEFAULT_AGENT_PERSONALIZATION } from "./types";
 import { getBuiltinCommands } from "./commands";
 import { LANGUAGE_NAMES } from "./systemPrompts";
@@ -289,6 +289,9 @@ export class CrystalSettingTab extends PluginSettingTab {
 			void this.plugin.saveSettings();
 		}
 
+		// Create const reference for callbacks (agent is guaranteed non-null after the above block)
+		const agentRef = agent;
+
 		new Setting(containerEl).setName("Claude Code").setHeading();
 
 		// Auto-detect CLI path on settings open
@@ -300,7 +303,7 @@ export class CrystalSettingTab extends PluginSettingTab {
 
 		// CLI Status indicator (no path input - auto-detected)
 		const cliStatusEl = containerEl.createDiv({ cls: "crystal-cli-status" });
-		this.checkAndDisplayCLIStatus(cliStatusEl, agent);
+		void this.checkAndDisplayCLIStatus(cliStatusEl, agent);
 
 		// Model selection
 		const allModels = CLAUDE_MODELS;
@@ -315,19 +318,19 @@ export class CrystalSettingTab extends PluginSettingTab {
 					dropdown.addOption(model.value, model.label);
 				}
 				// If current model is disabled, select first enabled
-				const currentModelEnabled = enabledModels.some(m => m.value === agent!.model);
+				const currentModelEnabled = enabledModels.some(m => m.value === agentRef.model);
 				if (!currentModelEnabled && enabledModels.length > 0) {
 					const firstEnabled = enabledModels[0];
 					if (firstEnabled) {
-						agent!.model = firstEnabled.value;
+						agentRef.model = firstEnabled.value;
 						void this.plugin.saveSettings();
 					}
 				}
 				dropdown
-					.setValue(agent!.model)
-					.onChange(async (value) => {
-						agent!.model = value as ClaudeModel;
-						await this.plugin.saveSettings();
+					.setValue(agentRef.model)
+					.onChange((value) => {
+						agentRef.model = value as ClaudeModel;
+						void this.plugin.saveSettings();
 					});
 			});
 
@@ -345,20 +348,20 @@ export class CrystalSettingTab extends PluginSettingTab {
 				.addToggle(toggle => toggle
 					.setValue(isEnabled)
 					.onChange(async (value) => {
-						if (!agent!.disabledModels) {
-							agent!.disabledModels = [];
+						if (!agentRef.disabledModels) {
+							agentRef.disabledModels = [];
 						}
 						if (value) {
-							agent!.disabledModels = agent!.disabledModels.filter(m => m !== model.value);
+							agentRef.disabledModels = agentRef.disabledModels.filter(m => m !== model.value);
 						} else {
-							if (!agent!.disabledModels.includes(model.value)) {
-								agent!.disabledModels.push(model.value);
+							if (!agentRef.disabledModels.includes(model.value)) {
+								agentRef.disabledModels.push(model.value);
 							}
-							if (agent!.model === model.value) {
-								const remaining = allModels.filter(m => !agent!.disabledModels!.includes(m.value));
+							if (agentRef.model === model.value) {
+								const remaining = allModels.filter(m => !agentRef.disabledModels?.includes(m.value));
 								const firstRemaining = remaining[0];
 								if (firstRemaining) {
-									agent!.model = firstRemaining.value;
+									agentRef.model = firstRemaining.value;
 								}
 							}
 						}
@@ -376,11 +379,11 @@ export class CrystalSettingTab extends PluginSettingTab {
 			.addToggle(toggle => toggle
 				.setValue(permissions.extendedThinking)
 				.onChange(async (value) => {
-					if (!agent!.permissions) {
-						agent!.permissions = { ...DEFAULT_CLAUDE_PERMISSIONS };
+					if (!agentRef.permissions) {
+						agentRef.permissions = { ...DEFAULT_CLAUDE_PERMISSIONS };
 					}
-					agent!.permissions.extendedThinking = value;
-					agent!.thinkingEnabled = value;
+					agentRef.permissions.extendedThinking = value;
+					agentRef.thinkingEnabled = value;
 					await this.plugin.saveSettings();
 				}));
 
@@ -400,10 +403,10 @@ export class CrystalSettingTab extends PluginSettingTab {
 			.addToggle(toggle => toggle
 				.setValue(permissions.fileRead)
 				.onChange(async (value) => {
-					if (!agent!.permissions) {
-						agent!.permissions = { ...DEFAULT_CLAUDE_PERMISSIONS };
+					if (!agentRef.permissions) {
+						agentRef.permissions = { ...DEFAULT_CLAUDE_PERMISSIONS };
 					}
-					agent!.permissions.fileRead = value;
+					agentRef.permissions.fileRead = value;
 					await this.plugin.saveSettings();
 				}));
 
@@ -413,10 +416,10 @@ export class CrystalSettingTab extends PluginSettingTab {
 			.addToggle(toggle => toggle
 				.setValue(permissions.fileWrite)
 				.onChange(async (value) => {
-					if (!agent!.permissions) {
-						agent!.permissions = { ...DEFAULT_CLAUDE_PERMISSIONS };
+					if (!agentRef.permissions) {
+						agentRef.permissions = { ...DEFAULT_CLAUDE_PERMISSIONS };
 					}
-					agent!.permissions.fileWrite = value;
+					agentRef.permissions.fileWrite = value;
 					await this.plugin.saveSettings();
 				}));
 
@@ -426,10 +429,10 @@ export class CrystalSettingTab extends PluginSettingTab {
 			.addToggle(toggle => toggle
 				.setValue(permissions.fileEdit)
 				.onChange(async (value) => {
-					if (!agent!.permissions) {
-						agent!.permissions = { ...DEFAULT_CLAUDE_PERMISSIONS };
+					if (!agentRef.permissions) {
+						agentRef.permissions = { ...DEFAULT_CLAUDE_PERMISSIONS };
 					}
-					agent!.permissions.fileEdit = value;
+					agentRef.permissions.fileEdit = value;
 					await this.plugin.saveSettings();
 				}));
 
@@ -442,10 +445,10 @@ export class CrystalSettingTab extends PluginSettingTab {
 			.addToggle(toggle => toggle
 				.setValue(permissions.webSearch)
 				.onChange(async (value) => {
-					if (!agent!.permissions) {
-						agent!.permissions = { ...DEFAULT_CLAUDE_PERMISSIONS };
+					if (!agentRef.permissions) {
+						agentRef.permissions = { ...DEFAULT_CLAUDE_PERMISSIONS };
 					}
-					agent!.permissions.webSearch = value;
+					agentRef.permissions.webSearch = value;
 					await this.plugin.saveSettings();
 				}));
 
@@ -455,10 +458,10 @@ export class CrystalSettingTab extends PluginSettingTab {
 			.addToggle(toggle => toggle
 				.setValue(permissions.webFetch)
 				.onChange(async (value) => {
-					if (!agent!.permissions) {
-						agent!.permissions = { ...DEFAULT_CLAUDE_PERMISSIONS };
+					if (!agentRef.permissions) {
+						agentRef.permissions = { ...DEFAULT_CLAUDE_PERMISSIONS };
 					}
-					agent!.permissions.webFetch = value;
+					agentRef.permissions.webFetch = value;
 					await this.plugin.saveSettings();
 				}));
 
@@ -471,10 +474,10 @@ export class CrystalSettingTab extends PluginSettingTab {
 			.addToggle(toggle => toggle
 				.setValue(permissions.task)
 				.onChange(async (value) => {
-					if (!agent!.permissions) {
-						agent!.permissions = { ...DEFAULT_CLAUDE_PERMISSIONS };
+					if (!agentRef.permissions) {
+						agentRef.permissions = { ...DEFAULT_CLAUDE_PERMISSIONS };
 					}
-					agent!.permissions.task = value;
+					agentRef.permissions.task = value;
 					await this.plugin.saveSettings();
 				}));
 	}
@@ -494,7 +497,7 @@ export class CrystalSettingTab extends PluginSettingTab {
 		});
 		setIcon(refreshBtn, "refresh-cw");
 		refreshBtn.addEventListener("click", () => {
-			this.checkAndDisplayCLIStatus(container, agent);
+			void this.checkAndDisplayCLIStatus(container, agent);
 		});
 
 		// Content area for buttons/hints
@@ -674,7 +677,7 @@ export class CrystalSettingTab extends PluginSettingTab {
 						this.app,
 						this.plugin.skillLoader,
 						this.plugin.settings.language,
-						async (skillId: string) => {
+						(skillId: string) => {
 							this.plugin.skillLoader.refresh();
 							new Notice(this.locale.skillCreatedSuccess?.replace("{name}", skillId) || `Skill "${skillId}" created`);
 							this.display();
@@ -730,7 +733,7 @@ export class CrystalSettingTab extends PluginSettingTab {
 			setting.addButton(btn => btn
 				.setIcon("pencil")
 				.setTooltip(this.locale.editButton || "Edit")
-				.onClick(async () => {
+				.onClick(() => {
 					const fullSkill = this.plugin.skillLoader.getSkill(skill.id);
 					if (fullSkill) {
 						new EditSkillModal(
@@ -738,20 +741,20 @@ export class CrystalSettingTab extends PluginSettingTab {
 							this.plugin.skillLoader,
 							fullSkill,
 							this.plugin.settings.language,
-							async () => {
+							() => {
 								// On save - refresh and sync
 								this.plugin.skillLoader.refresh();
 								this.plugin.syncAllAgentSkills();
 								this.display();
 							},
-							async (deletedSkillId: string) => {
+							(deletedSkillId: string) => {
 								// On delete - remove skill from all agents, refresh and sync
 								for (const agent of this.plugin.settings.agents) {
 									if (agent.enabledSkills?.includes(deletedSkillId)) {
 										agent.enabledSkills = agent.enabledSkills.filter(id => id !== deletedSkillId);
 									}
 								}
-								await this.plugin.saveSettings();
+								void this.plugin.saveSettings();
 								this.plugin.skillLoader.refresh();
 								this.plugin.syncAllAgentSkills();
 								this.display();
@@ -784,7 +787,7 @@ export class CrystalSettingTab extends PluginSettingTab {
 
 		// Content (hidden by default)
 		const content = section.createDiv({ cls: "crystal-collapsible-content" });
-		content.addClass("crystal-hidden");
+		content.hide();
 
 		// Simulate Node.js missing toggle
 		new Setting(content)
@@ -1000,6 +1003,9 @@ export class CrystalSettingTab extends PluginSettingTab {
 			void this.plugin.saveSettings();
 		}
 
+		// Create const reference for callbacks (agent is guaranteed non-null after the above block)
+		const agentRef = agent;
+
 		// Language dropdown
 		new Setting(section)
 			.setName(this.locale.assistantLanguage)
@@ -1029,19 +1035,19 @@ export class CrystalSettingTab extends PluginSettingTab {
 				for (const model of enabledModels) {
 					dropdown.addOption(model.value, model.label);
 				}
-				const currentModelEnabled = enabledModels.some(m => m.value === agent!.model);
+				const currentModelEnabled = enabledModels.some(m => m.value === agentRef.model);
 				if (!currentModelEnabled && enabledModels.length > 0) {
 					const firstEnabled = enabledModels[0];
 					if (firstEnabled) {
-						agent!.model = firstEnabled.value;
+						agentRef.model = firstEnabled.value;
 						void this.plugin.saveSettings();
 					}
 				}
 				dropdown
-					.setValue(agent!.model)
-					.onChange(async (value) => {
-						agent!.model = value as ClaudeModel;
-						await this.plugin.saveSettings();
+					.setValue(agentRef.model)
+					.onChange((value) => {
+						agentRef.model = value as ClaudeModel;
+						void this.plugin.saveSettings();
 					});
 			});
 
@@ -1111,7 +1117,7 @@ export class CrystalSettingTab extends PluginSettingTab {
 
 		// Content (hidden by default)
 		const content = section.createDiv({ cls: "crystal-collapsible-content" });
-		content.addClass("crystal-hidden");
+		content.hide();
 
 		// Render permissions content
 		this.renderPermissionsContent(content, agent);
@@ -1301,10 +1307,10 @@ export class CrystalSettingTab extends PluginSettingTab {
 
 		// Content (hidden by default)
 		const content = section.createDiv({ cls: "crystal-collapsible-content" });
-		content.addClass("crystal-hidden");
+		content.hide();
 
 		// Render CLI status content
-		this.renderCliStatusContent(content, statusBadge, agent);
+		void this.renderCliStatusContent(content, statusBadge, agent);
 
 		// Toggle
 		header.addEventListener("click", () => {
@@ -1590,7 +1596,7 @@ class SkillsManagementModal extends Modal {
 						this.app,
 						this.plugin.skillLoader,
 						this.plugin.settings.language,
-						async (skillId: string) => {
+						(skillId: string) => {
 							this.plugin.skillLoader.refresh();
 							new Notice(this.locale.skillCreatedSuccess?.replace("{name}", skillId) || `Skill "${skillId}" created`);
 							this.onOpen();
@@ -1647,7 +1653,7 @@ class SkillsManagementModal extends Modal {
 			setting.addButton(btn => btn
 				.setIcon("pencil")
 				.setTooltip(this.locale.editButton || "Edit")
-				.onClick(async () => {
+				.onClick(() => {
 					const fullSkill = this.plugin.skillLoader.getSkill(skill.id);
 					if (fullSkill) {
 						new EditSkillModal(
@@ -1655,19 +1661,19 @@ class SkillsManagementModal extends Modal {
 							this.plugin.skillLoader,
 							fullSkill,
 							this.plugin.settings.language,
-							async () => {
+							() => {
 								this.plugin.skillLoader.refresh();
 								this.plugin.syncAllAgentSkills();
 								this.onOpen();
 								this.onSave();
 							},
-							async (deletedSkillId: string) => {
+							(deletedSkillId: string) => {
 								for (const ag of this.plugin.settings.agents) {
 									if (ag.enabledSkills?.includes(deletedSkillId)) {
 										ag.enabledSkills = ag.enabledSkills.filter(id => id !== deletedSkillId);
 									}
 								}
-								await this.plugin.saveSettings();
+								void this.plugin.saveSettings();
 								this.plugin.skillLoader.refresh();
 								this.plugin.syncAllAgentSkills();
 								this.onOpen();

@@ -300,7 +300,7 @@ export const SETTINGS_LOCALES: Record<LanguageCode, SettingsLocale> = {
 
 		// Permissions section
 		agentPermissions: "Разрешения агента",
-		permissionsNote: "Базовые возможности (всегда включены): чтение и редактирование заметок (.md, .canvas, .base). Bash-команды и доступ к папке .obsidian всегда заблокированы.",
+		permissionsNote: "Базовые возможности (всегда включены): чтение и редактирование заметок (.md, .canvas, .base). Bash-команды и доступ к папке конфигурации Obsidian всегда заблокированы.",
 		webSearch: "Веб-поиск",
 		webSearchDesc: "Разрешить Claude искать информацию в интернете",
 		webFetch: "Загрузка веб-страниц",
@@ -580,25 +580,25 @@ export const SETTINGS_LOCALES: Record<LanguageCode, SettingsLocale> = {
 		deepThinkingDesc: "Enable extended thinking for new chats. Uses more tokens but provides deeper analysis.",
 
 		// Permissions section
-		agentPermissions: "Agent Permissions",
-		permissionsNote: "Basic capabilities (always enabled): Reading and editing notes (.md, .canvas, .base). Bash commands and .obsidian folder access are always blocked.",
-		webSearch: "Web Search",
+		agentPermissions: "Agent permissions",
+		permissionsNote: "Basic capabilities (always enabled): Reading and editing notes (.md, .canvas, .base). Bash commands and Obsidian config folder access are always blocked.",
+		webSearch: "Web search",
 		webSearchDesc: "Allow Claude to search the internet for information",
-		webFetch: "Web Fetch",
+		webFetch: "Web fetch",
 		webFetchDesc: "Allow Claude to read content from web pages",
 		subAgents: "Sub-agents (Task)",
 		subAgentsDesc: "Allow Claude to launch helper agents for complex tasks",
 		// New permissions
-		fileOperations: "File Operations",
-		fileRead: "Read Files",
+		fileOperations: "File operations",
+		fileRead: "Read files",
 		fileReadDesc: "Allow agent to read files (.md, .canvas, .base)",
-		fileWrite: "Create Files",
+		fileWrite: "Create files",
 		fileWriteDesc: "Allow agent to create new files",
-		fileEdit: "Edit Files",
+		fileEdit: "Edit files",
 		fileEditDesc: "Allow agent to modify existing files",
-		webOperations: "Web Operations",
+		webOperations: "Web operations",
 		advanced: "Advanced",
-		extendedThinking: "Extended Thinking",
+		extendedThinking: "Extended thinking",
 		extendedThinkingDesc: "Use extended thinking for deep analysis",
 		// Skills section
 		skills: "Skills",
@@ -606,22 +606,22 @@ export const SETTINGS_LOCALES: Record<LanguageCode, SettingsLocale> = {
 		noSkillsAvailable: "No skills available",
 		customSkill: "Custom",
 		createNewSkill: "Create new",
-		builtinSkills: "Built-in Skills",
-		customSkills: "Custom Skills",
+		builtinSkills: "Built-in skills",
+		customSkills: "Custom skills",
 		validateSkill: "Validate skill",
 		addCustomSkill: "Add skill",
 		addCustomSkillDesc: "Create your own skill with custom instructions",
 		skillCreatedSuccess: "Skill \"{name}\" created successfully",
 
 		// Create Skill Modal
-		createNewSkillTitle: "Create Skill",
-		skillNameField: "Skill Name",
+		createNewSkillTitle: "Create skill",
+		skillNameField: "Skill name",
 		skillNameFieldDesc: "Unique identifier in kebab-case (e.g., my-custom-skill)",
 		skillNamePlaceholder: "my-skill-name",
 		skillDescriptionField: "Description",
 		skillDescriptionFieldDesc: "Detailed description for triggering (what it does, when to use)",
 		skillDescriptionPlaceholder: "Describe what this skill does...",
-		optionalFolders: "Optional Folders",
+		optionalFolders: "Optional folders",
 		includeScripts: "Include scripts/",
 		includeScriptsDesc: "For executable code (Python, shell scripts)",
 		includeReferences: "Include references/",
@@ -643,45 +643,45 @@ export const SETTINGS_LOCALES: Record<LanguageCode, SettingsLocale> = {
 		closeButton: "Close",
 
 		// Skill Selector Modal
-		selectSkillTitle: "Select a Skill",
+		selectSkillTitle: "Select a skill",
 		noCustomSkillsFound: "No custom skills found in .crystal/skills/",
 
 		// Edit Skill Modal
 		editSkillTitle: "Edit: {name}",
 		skillInstructionsField: "Instructions",
 		skillInstructionsFieldDesc: "The main content of the skill — instructions for the AI",
-		resourceFolders: "Resource Folders",
+		resourceFolders: "Resource folders",
 		scriptsFolder: "scripts/",
 		scriptsFolderDesc: "Executable code (Python, shell scripts)",
 		referencesFolder: "references/",
 		referencesFolderDesc: "Documentation loaded into context",
 		assetsFolder: "assets/",
 		assetsFolderDesc: "Output files (templates, images)",
-		deleteSkillButton: "Delete Skill",
+		deleteSkillButton: "Delete skill",
 		noFilesInFolder: "No files. Add files directly to the folder.",
-		openFolderButton: "Open Folder",
+		openFolderButton: "Open folder",
 		skillSaved: "Skill saved",
 		skillSaveFailed: "Failed to save skill",
 		confirmDeleteSkill: "Are you sure you want to delete skill \"{name}\"?",
 		skillDeleted: "Skill deleted",
 		skillDeleteFailed: "Failed to delete skill",
-		addFilesButton: "Add Files",
+		addFilesButton: "Add files",
 		selectFilesToAdd: "Select files to add",
 		filesAdded: "Files added successfully",
 		filesAddFailed: "Failed to add files",
 
 		// Slash Commands section
-		slashCommands: "Slash Commands",
+		slashCommands: "Slash commands",
 		slashCommandsNote: "Type / in chat to see available commands. Built-in commands can be disabled. You can also add custom commands.",
-		builtinCommands: "Built-in Commands",
-		customCommands: "Custom Commands",
+		builtinCommands: "Built-in commands",
+		customCommands: "Custom commands",
 		addCustomCommand: "Add custom command",
 		addCustomCommandDesc: "Create your own slash command with a custom prompt",
 		addButton: "Add",
 		deleteButton: "Delete",
 
 		// Getting Started section
-		gettingStarted: "Getting Started",
+		gettingStarted: "Getting started",
 		step1Title: "Open Terminal app",
 		step1MacOS: "macOS: press Cmd+Space, type \"Terminal\", press Enter",
 		step1Windows: "Windows: press Win+R, type \"cmd\", press Enter",
@@ -697,7 +697,7 @@ export const SETTINGS_LOCALES: Record<LanguageCode, SettingsLocale> = {
 		step7Note: "Allow access when prompted by your system",
 		step8Title: "Return to Obsidian and start chatting!",
 		subscriptionNote: "Requires Claude Pro ($20/mo) or Max ($100/mo) subscription.",
-		alreadyDoneButton: "Already Done",
+		alreadyDoneButton: "Already done",
 
 		// Usage Statistics
 		usageStatistics: "Usage statistics",
@@ -715,12 +715,12 @@ export const SETTINGS_LOCALES: Record<LanguageCode, SettingsLocale> = {
 		// Node.js Installation
 		nodeRequired: "Node.js required",
 		nodeRequiredDesc: "Claude Code requires Node.js to be installed. Choose your operating system:",
-		installViaTerminal: "Install via Terminal",
+		installViaTerminal: "Install via terminal",
 		nodeInstallMacOS: "Install Node.js on macOS",
 		nodeInstallWindows: "Install Node.js on Windows",
 		nodeInstallLinux: "Install Node.js on Linux",
 		homebrewRecommended: "Homebrew (recommended)",
-		officialInstaller: "Official Installer",
+		officialInstaller: "Official installer",
 		orUsePackageManager: "Or use a package manager:",
 		nodeInstallStep1: "1. Install Homebrew (if not installed):",
 		nodeInstallStep2: "2. Install Node.js:",
@@ -737,11 +737,11 @@ export const SETTINGS_LOCALES: Record<LanguageCode, SettingsLocale> = {
 		nodeLinuxNVMLink: "More info: github.com/nvm-sh/nvm →",
 
 		// Command Modal
-		editCommand: "Edit Command",
-		newCustomCommand: "New Custom Command",
+		editCommand: "Edit command",
+		newCustomCommand: "New custom command",
 		nameField: "Name",
 		nameFieldDesc: "Display name for the command",
-		namePlaceholder: "My Command",
+		namePlaceholder: "My command",
 		commandField: "Command",
 		commandFieldDesc: "The slash command trigger (e.g., /mycommand)",
 		commandPlaceholder: "/mycommand",
@@ -755,13 +755,13 @@ export const SETTINGS_LOCALES: Record<LanguageCode, SettingsLocale> = {
 		saveButton: "Save",
 
 		// CLAUDE.md Modal
-		systemInstructionsTitle: "System Instructions",
+		systemInstructionsTitle: "System instructions",
 		systemInstructionsModalDesc: "This file (CLAUDE.md) is located in your vault root. Claude reads it automatically before each conversation.",
 		resetToDefaultButton: "Reset to default",
 		loadingPlaceholder: "Loading...",
 
 		// Agents section
-		agentsSection: "Crystal Agents",
+		agentsSection: "Crystal agents",
 		addAgent: "Add agent",
 		comingSoon: "Coming soon",
 		agentAlreadyExists: "Already added",
@@ -774,8 +774,8 @@ export const SETTINGS_LOCALES: Record<LanguageCode, SettingsLocale> = {
 		defaultModelDescNoSlash: "Model used for new chats.",
 
 		// Terminal integration
-		startIntegration: "Start Integration",
-		openTerminal: "Open Terminal",
+		startIntegration: "Start integration",
+		openTerminal: "Open terminal",
 		openTerminalDesc: "Open system terminal with Claude Code",
 		integrationNote: "Opens terminal and starts CLI installation",
 
@@ -798,32 +798,32 @@ export const SETTINGS_LOCALES: Record<LanguageCode, SettingsLocale> = {
 		notAuthenticatedDesc: "Log in to CLI to view limits",
 		limitsError: "Failed to fetch limits",
 		loginToCli: "Log in to CLI",
-		dangerZone: "Danger Zone",
+		dangerZone: "Danger zone",
 		deleteIntegration: "Delete this integration",
 		deleteIntegrationDesc: "This will remove the agent from your settings. This action cannot be undone.",
-		confirmDeleteTitle: "Delete Integration?",
+		confirmDeleteTitle: "Delete integration?",
 		confirmDeleteMessage: "Are you sure you want to delete",
 
 		// Model management
-		availableModels: "Available Models",
+		availableModels: "Available models",
 		availableModelsDesc: "Disable models you don't want to use",
 
 		// Agent Personalization
-		agentPersonalization: "Agent Personalization",
+		agentPersonalization: "Agent personalization",
 		agentPersonalizationDesc: "This information helps Claude understand your context and tailor responses. All fields are optional.",
 		personalizationUserName: "Name",
 		personalizationUserNameDesc: "How should I address you",
 		personalizationUserNamePlaceholder: "e.g., Alex",
-		personalizationUserRole: "Role / Profession",
+		personalizationUserRole: "Role / profession",
 		personalizationUserRoleDesc: "Your profession or role",
 		personalizationUserRolePlaceholder: "e.g., product designer",
-		personalizationWorkContext: "Work Context",
+		personalizationWorkContext: "Work context",
 		personalizationWorkContextDesc: "Describe your work specifics and knowledge base",
 		personalizationWorkContextPlaceholder: "e.g., Managing a knowledge base for UX research and design systems",
-		personalizationCommunicationStyle: "Communication Style",
+		personalizationCommunicationStyle: "Communication style",
 		personalizationCommunicationStyleDesc: "How you prefer to receive responses",
 		personalizationCommunicationStylePlaceholder: "e.g., Brief, to the point, with examples",
-		personalizationCurrentFocus: "Current Focus",
+		personalizationCurrentFocus: "Current focus",
 		personalizationCurrentFocusDesc: "What you're currently working on",
 		personalizationCurrentFocusPlaceholder: "e.g., Mobile app redesign",
 		personalizationConfigured: "Configured",
@@ -832,7 +832,7 @@ export const SETTINGS_LOCALES: Record<LanguageCode, SettingsLocale> = {
 
 		// Settings restructure
 		agentSection: "Agent",
-		commandsAndSkills: "Commands & Skills",
+		commandsAndSkills: "Commands & skills",
 		commandsCount: "commands",
 		skillsCount: "skills",
 		manageCommands: "Commands",
@@ -843,7 +843,7 @@ export const SETTINGS_LOCALES: Record<LanguageCode, SettingsLocale> = {
 		commandsModalTitle: "Commands",
 		skillsModalTitle: "Skills",
 		permissionsSection: "Permissions",
-		cliStatusSection: "CLI Status"
+		cliStatusSection: "CLI status"
 	},
 
 	fr: {
@@ -862,7 +862,7 @@ export const SETTINGS_LOCALES: Record<LanguageCode, SettingsLocale> = {
 
 		// Permissions section
 		agentPermissions: "Permissions de l'agent",
-		permissionsNote: "Capacités de base (toujours activées): Lecture et édition de notes (.md, .canvas, .base). Les commandes Bash et l'accès au dossier .obsidian sont toujours bloqués.",
+		permissionsNote: "Capacités de base (toujours activées): Lecture et édition de notes (.md, .canvas, .base). Les commandes Bash et l'accès au dossier de configuration d'Obsidian sont toujours bloqués.",
 		webSearch: "Recherche Web",
 		webSearchDesc: "Autoriser Claude à chercher des informations sur internet",
 		webFetch: "Récupération Web",
@@ -1143,7 +1143,7 @@ export const SETTINGS_LOCALES: Record<LanguageCode, SettingsLocale> = {
 
 		// Permissions section
 		agentPermissions: "Agent-Berechtigungen",
-		permissionsNote: "Grundfunktionen (immer aktiviert): Lesen und Bearbeiten von Notizen (.md, .canvas, .base). Bash-Befehle und .obsidian Ordnerzugriff sind immer blockiert.",
+		permissionsNote: "Grundfunktionen (immer aktiviert): Lesen und Bearbeiten von Notizen (.md, .canvas, .base). Bash-Befehle und Zugriff auf den Obsidian-Konfigurationsordner sind immer blockiert.",
 		webSearch: "Websuche",
 		webSearchDesc: "Claude erlauben, im Internet nach Informationen zu suchen",
 		webFetch: "Web-Abruf",
@@ -1424,7 +1424,7 @@ export const SETTINGS_LOCALES: Record<LanguageCode, SettingsLocale> = {
 
 		// Permissions section
 		agentPermissions: "Permisos del agente",
-		permissionsNote: "Capacidades básicas (siempre habilitadas): Lectura y edición de notas (.md, .canvas, .base). Los comandos Bash y el acceso a la carpeta .obsidian están siempre bloqueados.",
+		permissionsNote: "Capacidades básicas (siempre habilitadas): Lectura y edición de notas (.md, .canvas, .base). Los comandos Bash y el acceso a la carpeta de configuración de Obsidian están siempre bloqueados.",
 		webSearch: "Búsqueda web",
 		webSearchDesc: "Permitir que Claude busque información en internet",
 		webFetch: "Obtención web",
@@ -1707,7 +1707,7 @@ export const SETTINGS_LOCALES: Record<LanguageCode, SettingsLocale> = {
 
 		// Permissions section
 		agentPermissions: "एजेंट अनुमतियाँ",
-		permissionsNote: "बुनियादी क्षमताएं (हमेशा सक्षम): नोट्स पढ़ना और संपादित करना (.md, .canvas, .base)। Bash कमांड और .obsidian फ़ोल्डर एक्सेस हमेशा अवरुद्ध हैं।",
+		permissionsNote: "बुनियादी क्षमताएं (हमेशा सक्षम): नोट्स पढ़ना और संपादित करना (.md, .canvas, .base)। Bash कमांड और Obsidian कॉन्फ़िग फ़ोल्डर एक्सेस हमेशा अवरुद्ध हैं।",
 		webSearch: "वेब खोज",
 		webSearchDesc: "Claude को इंटरनेट पर जानकारी खोजने की अनुमति दें",
 		webFetch: "वेब फ़ेच",
@@ -1990,7 +1990,7 @@ export const SETTINGS_LOCALES: Record<LanguageCode, SettingsLocale> = {
 
 		// Permissions section
 		agentPermissions: "代理权限",
-		permissionsNote: "基本功能（始终启用）：读取和编辑笔记（.md、.canvas、.base）。Bash 命令和 .obsidian 文件夹访问始终被阻止。",
+		permissionsNote: "基本功能（始终启用）：读取和编辑笔记（.md、.canvas、.base）。Bash 命令和 Obsidian 配置文件夹访问始终被阻止。",
 		webSearch: "网络搜索",
 		webSearchDesc: "允许 Claude 在互联网上搜索信息",
 		webFetch: "网页获取",
@@ -2273,7 +2273,7 @@ export const SETTINGS_LOCALES: Record<LanguageCode, SettingsLocale> = {
 
 		// Permissions section
 		agentPermissions: "エージェント権限",
-		permissionsNote: "基本機能（常に有効）：ノートの読み取りと編集（.md、.canvas、.base）。Bash コマンドと .obsidian フォルダへのアクセスは常にブロックされます。",
+		permissionsNote: "基本機能（常に有効）：ノートの読み取りと編集（.md、.canvas、.base）。Bash コマンドと Obsidian 設定フォルダへのアクセスは常にブロックされます。",
 		webSearch: "ウェブ検索",
 		webSearchDesc: "Claude にインターネットでの情報検索を許可",
 		webFetch: "ウェブ取得",

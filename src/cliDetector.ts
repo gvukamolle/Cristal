@@ -54,8 +54,9 @@ function getCandidatePaths(): string[] {
 				path.join(homeDir, ".nvm/versions/node"),  // NVM - will check subdirs
 			];
 		}
-		default:
+		default: {
 			return [];
+		}
 	}
 }
 
