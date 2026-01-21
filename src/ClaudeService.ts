@@ -14,6 +14,7 @@ export class ClaudeService extends EventEmitter {
 	private pendingMessages: Map<string, PendingMessage> = new Map();
 	private cliPath: string;
 	private workingDir: string;
+	private configDir: string = ".obsidian"; // Obsidian config folder (can be customized by user)
 	private permissions: ClaudePermissions;
 	private debug = true; // DEBUG MODE: Check DevTools for usage data
 
@@ -55,7 +56,7 @@ export class ClaudeService extends EventEmitter {
 
 	private log(...args: unknown[]): void {
 		if (this.debug) {
-			console.log("[ClaudeService]", ...args);
+			console.debug("[ClaudeService]", ...args);
 		}
 	}
 
@@ -65,6 +66,10 @@ export class ClaudeService extends EventEmitter {
 
 	setWorkingDir(dir: string): void {
 		this.workingDir = dir;
+	}
+
+	setConfigDir(dir: string): void {
+		this.configDir = dir;
 	}
 
 	setPermissions(permissions: ClaudePermissions): void {
@@ -121,10 +126,10 @@ export class ClaudeService extends EventEmitter {
 		const denyRules: string[] = [
 			// Always block dangerous operations
 			"Bash",
-			"Read(./.obsidian/**)",
-			"Edit(./.obsidian/**)",
-			"Write(./.obsidian/**)",
-			"Delete(./.obsidian/**)",
+			`Read(./${this.configDir}/**)`,
+			`Edit(./${this.configDir}/**)`,
+			`Write(./${this.configDir}/**)`,
+			`Delete(./${this.configDir}/**)`,
 			"Read(./.trash/**)",
 			"Edit(./.trash/**)",
 			"Write(./.trash/**)",
@@ -161,7 +166,7 @@ export class ClaudeService extends EventEmitter {
 		}
 	}
 
-	async sendMessage(prompt: string, sessionId: string, cliSessionId?: string, model?: string): Promise<void> {
+	sendMessage(prompt: string, sessionId: string, cliSessionId?: string, model?: string): void {
 		// Abort existing process for this sessionId if any
 		const existingProcess = this.processes.get(sessionId);
 		if (existingProcess) {

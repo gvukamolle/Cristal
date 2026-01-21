@@ -95,7 +95,7 @@ export class SkillLoader {
 		const skillFolders = entries.filter(e => e.isDirectory());
 
 		for (const skillFolder of skillFolders) {
-			const skill = await this.loadSkillFromFolderFS(skillFolder.name, skillsDir);
+			const skill = this.loadSkillFromFolderFS(skillFolder.name, skillsDir);
 			if (skill) {
 				this.vaultSkills.set(skill.id, skill);
 			}
@@ -105,10 +105,10 @@ export class SkillLoader {
 	/**
 	 * Load a complete skill from a folder using file system directly
 	 */
-	private async loadSkillFromFolderFS(
+	private loadSkillFromFolderFS(
 		folderName: string,
 		skillsDir: string
-	): Promise<Skill | null> {
+	): Skill | null {
 		const skillDir = path.join(skillsDir, folderName);
 		const skillMdPath = path.join(skillDir, 'SKILL.md');
 
@@ -289,7 +289,7 @@ export class SkillLoader {
 	/**
 	 * Validate a skill folder using file system directly
 	 */
-	async validateSkill(skillId: string): Promise<SkillValidationResult> {
+	validateSkill(skillId: string): SkillValidationResult {
 		const skill = this.vaultSkills.get(skillId);
 		if (!skill || !skill.path) {
 			return {
@@ -371,7 +371,7 @@ export class SkillLoader {
 				if (!enabledSkillIds.includes(folder)) {
 					const folderPath = path.join(skillsDir, folder);
 					fs.rmSync(folderPath, { recursive: true, force: true });
-					console.log(`SkillLoader: Removed skill folder ${folderPath}`);
+					console.debug(`SkillLoader: Removed skill folder ${folderPath}`);
 				}
 			}
 
@@ -380,10 +380,10 @@ export class SkillLoader {
 				const skill = this.getSkill(skillId);
 				if (!skill) continue;
 
-				await this.syncSingleSkill(skill, skillsDir, vaultPath);
+				this.syncSingleSkill(skill, skillsDir, vaultPath);
 			}
 
-			console.log(`SkillLoader: Synced ${enabledSkillIds.length} skills for ${cliType}`);
+			console.debug(`SkillLoader: Synced ${enabledSkillIds.length} skills for ${cliType}`);
 		} catch (error) {
 			console.error(`SkillLoader: Failed to sync skills for ${cliType}:`, error);
 		}
@@ -392,11 +392,11 @@ export class SkillLoader {
 	/**
 	 * Sync a single skill with all its resources
 	 */
-	private async syncSingleSkill(
+	private syncSingleSkill(
 		skill: Skill,
 		targetSkillsDir: string,
 		vaultPath: string
-	): Promise<void> {
+	): void {
 		const skillFolder = path.join(targetSkillsDir, skill.id);
 
 		// Remove existing folder to ensure clean sync
@@ -430,7 +430,7 @@ export class SkillLoader {
 			}
 		}
 
-		console.log(`SkillLoader: Synced skill ${skill.id} to ${skillFolder}`);
+		console.debug(`SkillLoader: Synced skill ${skill.id} to ${skillFolder}`);
 	}
 
 	/**
@@ -603,7 +603,7 @@ description: ${description}
 	/**
 	 * Ensure a resource folder exists for a skill
 	 */
-	async ensureResourceFolder(skillId: string, resourceType: string): Promise<void> {
+	ensureResourceFolder(skillId: string, resourceType: string): void {
 		const adapter = this.vault.adapter;
 		if (!(adapter instanceof FileSystemAdapter)) {
 			return;
@@ -671,7 +671,7 @@ description: ${description}
 	/**
 	 * Delete a skill completely
 	 */
-	async deleteSkill(skillId: string): Promise<{ success: boolean; error?: string }> {
+	deleteSkill(skillId: string): { success: boolean; error?: string } {
 		const skill = this.vaultSkills.get(skillId);
 		if (!skill || !skill.path) {
 			return { success: false, error: 'Skill not found' };

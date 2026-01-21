@@ -1,10 +1,10 @@
-import { Plugin, FileSystemAdapter, Menu, Editor, MarkdownView } from "obsidian";
+import { Plugin, FileSystemAdapter, Menu, Editor, MarkdownView, Notice } from "obsidian";
 import { execSync } from "child_process";
 import { CrystalChatView, CRYSTAL_VIEW_TYPE } from "./ChatView";
 import { ClaudeService } from "./ClaudeService";
 import { CrystalSettingTab } from "./settings";
 import type { CrystalSettings, ChatSession, PluginData, AgentConfig, CLIType } from "./types";
-import { DEFAULT_SETTINGS, DEFAULT_AGENTS } from "./types";
+import { DEFAULT_SETTINGS } from "./types";
 import { detectCLIPath } from "./cliDetector";
 import { SkillLoader, CreateSkillModal, ValidateSkillModal, SkillSelectorModal } from "./skills";
 
@@ -30,6 +30,8 @@ export default class CrystalPlugin extends Plugin {
 
 		// Claude service
 		this.claudeService = new ClaudeService(claudeAgent?.cliPath || "claude", vaultPath);
+		// Set config directory from vault (may be customized by user, not always .obsidian)
+		this.claudeService.setConfigDir(this.app.vault.configDir);
 		if (claudeAgent?.permissions) {
 			this.claudeService.setPermissions(claudeAgent.permissions);
 		}
@@ -37,7 +39,7 @@ export default class CrystalPlugin extends Plugin {
 		// Initialize skill loader
 		this.skillLoader = new SkillLoader(this.app.vault);
 		await this.skillLoader.initialize();
-		console.log(`Crystal: Loaded ${this.skillLoader.getSkillReferences().length} skills`);
+		console.debug(`Crystal: Loaded ${this.skillLoader.getSkillReferences().length} skills`);
 
 		// Sync skills for all agents on startup
 		await this.syncAllAgentSkills();
@@ -51,7 +53,7 @@ export default class CrystalPlugin extends Plugin {
 				(leaf) => new CrystalChatView(leaf, this)
 			);
 		} else {
-			console.log("Crystal: View type already registered (hot reload)");
+			console.debug("Crystal: View type already registered (hot reload)");
 		}
 
 		// Add ribbon icon to open chat
@@ -89,7 +91,7 @@ export default class CrystalPlugin extends Plugin {
 					async (skillId: string) => {
 						await this.skillLoader.refresh();
 						await this.syncAllAgentSkills();
-						new (await import("obsidian")).Notice(`Skill "${skillId}" created successfully`);
+						new Notice(`Skill "${skillId}" created successfully`);
 					}
 				).open();
 			}
@@ -103,7 +105,7 @@ export default class CrystalPlugin extends Plugin {
 				const vaultSkills = this.skillLoader.getSkillReferences().filter(s => !s.isBuiltin);
 
 				if (vaultSkills.length === 0) {
-					new (require("obsidian")).Notice("No custom skills found in .crystal/skills/");
+					new Notice("No custom skills found in .crystal/skills/");
 					return;
 				}
 
@@ -126,7 +128,7 @@ export default class CrystalPlugin extends Plugin {
 				await this.skillLoader.refresh();
 				await this.syncAllAgentSkills();
 				const count = this.skillLoader.getSkillReferences().length;
-				new (require("obsidian")).Notice(`Skills refreshed. Found ${count} skills.`);
+				new Notice(`Skills refreshed. Found ${count} skills.`);
 			}
 		});
 
@@ -160,7 +162,7 @@ export default class CrystalPlugin extends Plugin {
 			})
 		);
 
-		console.log("Crystal plugin loaded");
+		console.debug("Crystal plugin loaded");
 	}
 
 	// Add selected text to chat context with position info
@@ -189,9 +191,7 @@ export default class CrystalPlugin extends Plugin {
 	onunload(): void {
 		// Abort all running processes
 		this.claudeService.abortAll();
-		// Detach all leaves of this view type to avoid "existing view type" error on reload
-		this.app.workspace.detachLeavesOfType(CRYSTAL_VIEW_TYPE);
-		console.log("Crystal plugin unloaded");
+		console.debug("Crystal plugin unloaded");
 	}
 
 	// ==================== Agent Helper Methods ====================
@@ -333,7 +333,7 @@ export default class CrystalPlugin extends Plugin {
 
 			// Migrate from old format if needed (no agents array)
 			if (!this.settings.agents || this.settings.agents.length === 0) {
-				console.log("Crystal: Migrating from old settings format to agents...");
+				console.debug("Crystal: Migrating from old settings format to agents...");
 				this.settings.agents = this.migrateOldSettings(data.settings);
 				this.settings.defaultAgentId = "claude-default";
 			}
@@ -349,7 +349,7 @@ export default class CrystalPlugin extends Plugin {
 				const detected = detectCLIPath();
 				if (detected.found) {
 					agent.cliPath = detected.path;
-					console.log(`Crystal: Auto-detected Claude CLI at ${detected.path}`);
+					console.debug(`Crystal: Auto-detected Claude CLI at ${detected.path}`);
 				}
 			}
 		}
@@ -413,7 +413,7 @@ export default class CrystalPlugin extends Plugin {
 		};
 		this.sessions.unshift(session);
 		this.currentSessionId = session.id;
-		this.saveSettings();
+		void this.saveSettings();
 		return session;
 	}
 
@@ -430,7 +430,7 @@ export default class CrystalPlugin extends Plugin {
 		const session = this.sessions.find(s => s.id === sessionId);
 		if (session) {
 			this.currentSessionId = sessionId;
-			this.saveSettings();
+			void this.saveSettings();
 		}
 		return session || null;
 	}
@@ -454,7 +454,7 @@ export default class CrystalPlugin extends Plugin {
 					session.title = firstUserMsg.content.slice(0, 50) + (firstUserMsg.content.length > 50 ? "..." : "");
 				}
 			}
-			this.saveSettings();
+			void this.saveSettings();
 		}
 	}
 
@@ -463,7 +463,7 @@ export default class CrystalPlugin extends Plugin {
 		if (this.currentSessionId === sessionId) {
 			this.currentSessionId = this.sessions[0]?.id || null;
 		}
-		this.saveSettings();
+		void this.saveSettings();
 	}
 
 	addTokensToHistory(tokens: number): void {
@@ -474,7 +474,7 @@ export default class CrystalPlugin extends Plugin {
 			this.settings.tokenHistory = {};
 		}
 		this.settings.tokenHistory[today] = (this.settings.tokenHistory[today] || 0) + tokens;
-		this.saveSettings();
+		void this.saveSettings();
 	}
 
 	getTokenHistory(): Record<string, number> {

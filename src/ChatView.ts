@@ -29,7 +29,7 @@ export class CrystalChatView extends ItemView {
 	private activeSessionId: string | null = null;  // ID of currently active session
 	private contextDisabled: boolean = false;  // User manually removed context
 	private modelIndicatorEl: HTMLElement;
-	private currentModel: ClaudeModel | string;
+	private currentModel: ClaudeModel;
 	private sessionStarted: boolean = false;  // Track if first message was sent
 	private agentUnavailable: boolean = false;  // Track if session's agent is unavailable
 	private noAgentsConfigured: boolean = false;  // Track if no agents are configured/enabled
@@ -232,7 +232,7 @@ export class CrystalChatView extends ItemView {
 		const defaultAgent = this.plugin.getDefaultAgent();
 
 		// Model indicator
-		this.currentModel = defaultAgent?.model || "claude-haiku-4-5-20251001";
+		this.currentModel = (defaultAgent?.model ?? "claude-haiku-4-5-20251001") as ClaudeModel;
 		this.modelIndicatorEl = leftGroup.createDiv({ cls: "crystal-model-indicator" });
 		const modelIcon = this.modelIndicatorEl.createSpan({ cls: "crystal-model-indicator-icon" });
 		setIcon(modelIcon, "cpu");
@@ -285,7 +285,7 @@ export class CrystalChatView extends ItemView {
 				accept: ".md,.txt,.json,.yaml,.yml,.js,.ts,.tsx,.jsx,.py,.java,.cpp,.c,.h,.go,.rs,.rb,.php,.html,.css,.xml,.csv,.pdf,.png,.jpg,.jpeg,.gif,.webp,.xlsx,.docx"
 			}
 		});
-		this.fileInputEl.style.display = "none";
+		this.fileInputEl.addClass("crystal-hidden");
 
 		attachBtn.addEventListener("click", () => this.fileInputEl.click());
 		this.fileInputEl.addEventListener("change", async (e: Event) => {
@@ -466,7 +466,7 @@ export class CrystalChatView extends ItemView {
 							session.cliSessionId = cliSessionId;
 						}
 
-						this.plugin.saveSettings();
+						void this.plugin.saveSettings();
 						this.plugin.claudeService.clearPendingMessage(event.sessionId);
 					}
 				}
@@ -540,7 +540,7 @@ export class CrystalChatView extends ItemView {
 					this.lastRecordedTokens = currentTotal;
 				}
 
-				this.plugin.saveSettings();
+				void this.plugin.saveSettings();
 
 				// UI updates only for active session
 				if (isActiveSession) {
@@ -565,7 +565,7 @@ export class CrystalChatView extends ItemView {
 				}
 				session.tokenStats.compactCount++;
 				session.tokenStats.lastCompactPreTokens = event.preTokens;
-				this.plugin.saveSettings();
+				void this.plugin.saveSettings();
 			}
 
 			if (isActiveSession) {
@@ -604,7 +604,7 @@ export class CrystalChatView extends ItemView {
 	}
 
 	// Model indicator methods
-	private getModelLabel(model: ClaudeModel | string): string {
+	private getModelLabel(model: ClaudeModel): string {
 		const claudeFound = CLAUDE_MODELS.find(m => m.value === model);
 		if (claudeFound) return claudeFound.label;
 
@@ -690,7 +690,7 @@ export class CrystalChatView extends ItemView {
 		this.autocompleteEl.addClass("crystal-autocomplete-visible");
 	}
 
-	private selectModel(model: ClaudeModel | string): void {
+	private selectModel(model: ClaudeModel): void {
 		this.currentModel = model;
 		this.updateModelIndicatorState();
 		this.hideModelAutocomplete();
@@ -924,7 +924,7 @@ Provide only the summary, no additional commentary.`;
 			this.plugin.claudeService.on("complete", onComplete);
 
 			// Send summary request (new session, no resume)
-			await this.plugin.claudeService.sendMessage(
+			this.plugin.claudeService.sendMessage(
 				summaryPrompt,
 				summarySessionId,
 				undefined, // New session
@@ -955,7 +955,7 @@ Provide only the summary, no additional commentary.`;
 			this.sessionStarted = false;
 			this.updateModelIndicatorState();
 
-			this.plugin.saveSettings();
+			void this.plugin.saveSettings();
 		}
 
 		// Reset token stats (keep compactCount incremented)
@@ -1089,7 +1089,7 @@ Provide only the summary, no additional commentary.`;
 		} else {
 			// Get model from default agent
 			const defaultAgent = this.plugin.getDefaultAgent();
-			this.currentModel = defaultAgent?.model || "claude-haiku-4-5-20251001";
+			this.currentModel = (defaultAgent?.model ?? "claude-haiku-4-5-20251001") as ClaudeModel;
 		}
 		this.updateModelIndicatorState();
 
@@ -1235,7 +1235,7 @@ Provide only the summary, no additional commentary.`;
 
 		// Click handler for expand/collapse
 		headerEl.addEventListener("click", () => {
-			const isExpanded = contentEl.style.display !== "none";
+			const isExpanded = !contentEl.hasClass("crystal-hidden");
 			this.reasoningGroupsExpanded = !isExpanded;
 
 			if (this.reasoningGroupsExpanded) {
@@ -1248,10 +1248,10 @@ Provide only the summary, no additional commentary.`;
 		// Apply global state
 		if (this.reasoningGroupsExpanded) {
 			groupEl.addClass("expanded");
-			contentEl.style.display = "block";
+			contentEl.removeClass("crystal-hidden");
 			setIcon(expandEl, "chevron-up");
 		} else {
-			contentEl.style.display = "none";
+			contentEl.addClass("crystal-hidden");
 			setIcon(expandEl, "chevron-down");
 		}
 	}
@@ -1290,7 +1290,7 @@ Provide only the summary, no additional commentary.`;
 
 		// Click handler for expand/collapse
 		headerEl.addEventListener("click", () => {
-			const isExpanded = contentEl.style.display !== "none";
+			const isExpanded = !contentEl.hasClass("crystal-hidden");
 			this.reasoningGroupsExpanded = !isExpanded;
 
 			if (this.reasoningGroupsExpanded) {
@@ -1303,10 +1303,10 @@ Provide only the summary, no additional commentary.`;
 		// Apply global state
 		if (this.reasoningGroupsExpanded) {
 			groupEl.addClass("expanded");
-			contentEl.style.display = "block";
+			contentEl.removeClass("crystal-hidden");
 			setIcon(expandEl, "chevron-up");
 		} else {
-			contentEl.style.display = "none";
+			contentEl.addClass("crystal-hidden");
 			setIcon(expandEl, "chevron-down");
 		}
 	}
@@ -2093,7 +2093,7 @@ Provide only the summary, no additional commentary.`;
 			this.updateModelIndicatorState();
 			// Save model to session
 			currentSession.model = this.currentModel;
-			this.plugin.saveSettings();
+			void this.plugin.saveSettings();
 		}
 
 		// Add ultrathink prefix if thinking mode is enabled
@@ -2102,7 +2102,7 @@ Provide only the summary, no additional commentary.`;
 		}
 
 		// Send to Claude service with model and session ID
-		await this.plugin.claudeService.sendMessage(
+		this.plugin.claudeService.sendMessage(
 			fullPrompt,
 			currentSession.id,
 			cliSessionId,
@@ -2322,7 +2322,7 @@ Provide only the summary, no additional commentary.`;
 		};
 		this.messages.push(message);
 
-		// Schedule button addition after 0.5 second (will be cancelled if tool arrives)
+		// Schedule button addition after 1 second (will be cancelled if tool arrives)
 		this.pendingButtonData = { messageEl: msgEl, content: this.currentAssistantContent, selectionContext, messageId: msgId };
 		this.buttonAddTimer = setTimeout(() => {
 			if (this.pendingButtonData) {
@@ -2334,7 +2334,7 @@ Provide only the summary, no additional commentary.`;
 				this.pendingButtonData = null;
 			}
 			this.buttonAddTimer = null;
-		}, 500);
+		}, 1000);
 
 		// Reset state
 		this.currentAssistantContent = "";
@@ -2587,9 +2587,9 @@ Provide only the summary, no additional commentary.`;
 
 		noteButtons.forEach(btn => {
 			if (activeFile && activeFile.extension === "md") {
-				(btn as HTMLElement).style.display = "flex";
+				(btn as HTMLElement).removeClass("crystal-hidden");
 			} else {
-				(btn as HTMLElement).style.display = "none";
+				(btn as HTMLElement).addClass("crystal-hidden");
 			}
 		});
 	}
@@ -2852,7 +2852,7 @@ Provide only the summary, no additional commentary.`;
 			titleEl.setText(actionLabel.text);
 
 			const counterEl = headerEl.createSpan({ cls: "crystal-reasoning-group-counter" });
-			counterEl.style.display = "none";
+			counterEl.addClass("crystal-hidden");
 
 			const expandEl = headerEl.createSpan({ cls: "crystal-reasoning-group-expand" });
 
@@ -2861,7 +2861,7 @@ Provide only the summary, no additional commentary.`;
 
 			// Click header to expand/collapse (synced across all groups)
 			headerEl.addEventListener("click", () => {
-				const isExpanded = contentEl.style.display !== "none";
+				const isExpanded = !contentEl.hasClass("crystal-hidden");
 
 				// Update global state
 				this.reasoningGroupsExpanded = !isExpanded;
@@ -2877,10 +2877,10 @@ Provide only the summary, no additional commentary.`;
 			// Start with global state
 			if (this.reasoningGroupsExpanded) {
 				groupEl.addClass("expanded");
-				contentEl.style.display = "block";
+				contentEl.removeClass("crystal-hidden");
 				setIcon(expandEl, "chevron-up");
 			} else {
-				contentEl.style.display = "none";
+				contentEl.addClass("crystal-hidden");
 				setIcon(expandEl, "chevron-down");
 			}
 
@@ -2907,7 +2907,7 @@ Provide only the summary, no additional commentary.`;
 		// Update counter
 		const counterEl = this.currentToolStepsGroup.element?.querySelector(".crystal-reasoning-group-counter") as HTMLElement;
 		if (counterEl && count > 1) {
-			counterEl.style.display = "inline";
+			counterEl.removeClass("crystal-hidden");
 			counterEl.setText(`(${count})`);
 		}
 
@@ -2949,7 +2949,7 @@ Provide only the summary, no additional commentary.`;
 
 		// Counter badge (initially hidden, shown when group has >1 items)
 		const counterEl = stepHeader.createSpan({ cls: "crystal-tool-step-counter" });
-		counterEl.style.display = "none";
+		counterEl.addClass("crystal-hidden");
 
 		// Details block (use simple format without JSON wrapper)
 		const detailsEl = stepEl.createDiv({ cls: "crystal-tool-step-details" });
@@ -2958,19 +2958,19 @@ Provide only the summary, no additional commentary.`;
 		// Special handling for todo_list: always expanded, no collapse
 		const isTodoList = tool.name === "todo_list";
 		if (isTodoList) {
-			detailsEl.style.display = "block";
+			detailsEl.removeClass("crystal-hidden");
 			stepEl.addClass("expanded");
 			stepEl.addClass("crystal-tool-step-no-collapse");
 		} else {
 			// Expand arrow (not for todo_list)
 			const expandEl = stepHeader.createSpan({ cls: "crystal-tool-step-expand" });
 			setIcon(expandEl, "chevron-down");
-			detailsEl.style.display = "none";
+			detailsEl.addClass("crystal-hidden");
 
 			// Click handler for expand/collapse
 			stepHeader.addEventListener("click", () => {
-				const isExpanded = detailsEl.style.display !== "none";
-				detailsEl.style.display = isExpanded ? "none" : "block";
+				const isExpanded = !detailsEl.hasClass("crystal-hidden");
+				detailsEl.toggleClass("crystal-hidden", isExpanded);
 				stepEl.toggleClass("expanded", !isExpanded);
 				expandEl.empty();
 				setIcon(expandEl, isExpanded ? "chevron-down" : "chevron-up");
@@ -2999,7 +2999,7 @@ Provide only the summary, no additional commentary.`;
 		// Show and update counter
 		const counterEl = group.element.querySelector(".crystal-tool-step-counter") as HTMLElement;
 		if (counterEl && count > 1) {
-			counterEl.style.display = "inline";
+			counterEl.removeClass("crystal-hidden");
 			counterEl.setText(`(${count})`);
 		}
 
@@ -3018,24 +3018,25 @@ Provide only the summary, no additional commentary.`;
 		const line = container.createDiv({ cls: "crystal-tool-detail-line" });
 
 		switch (tool.name) {
-			case "command_execution":
+			case "command_execution": {
 				// Extract the actual command, not bash wrapper
 				const cmd = (input.command as string) || "";
 				const match = cmd.match(/^(?:\/bin\/)?bash\s+-lc\s+['"]([\s\S]*)['"]$/);
 				const inner = (match && match[1]) ? match[1] : cmd;
 				line.setText(inner.substring(0, 100) + (inner.length > 100 ? "..." : ""));
 				break;
+			}
 			case "Read":
 			case "file_read":
 				line.setText(String(input.file_path || ""));
 				break;
 			case "Grep":
-				line.setText(`${input.pattern} ${input.path ? "в " + input.path : ""}`);
+				line.setText(`${String(input.pattern ?? "")} ${input.path ? "в " + String(input.path) : ""}`);
 				break;
 			case "Glob":
-				line.setText(`${input.pattern}`);
+				line.setText(`${String(input.pattern ?? "")}`);
 				break;
-			case "todo_list":
+			case "todo_list": {
 				// Remove default line, render checkboxes instead
 				line.remove();
 				const items = input.items as Array<{ text: string; completed: boolean }> | undefined;
@@ -3049,13 +3050,15 @@ Provide only the summary, no additional commentary.`;
 					}
 				}
 				break;
-			default:
+			}
+			default: {
 				// For other tools, show first meaningful value
 				const firstValue = Object.values(input).find(v => typeof v === "string" && v.length > 0);
 				if (firstValue) {
 					const val = String(firstValue);
 					line.setText(val.substring(0, 80) + (val.length > 80 ? "..." : ""));
 				}
+			}
 		}
 	}
 
@@ -3083,7 +3086,7 @@ Provide only the summary, no additional commentary.`;
 			titleEl.setText(locale.thinking || "Думает...");
 
 			const counterEl = headerEl.createSpan({ cls: "crystal-reasoning-group-counter" });
-			counterEl.style.display = "none";
+			counterEl.addClass("crystal-hidden");
 
 			const expandEl = headerEl.createSpan({ cls: "crystal-reasoning-group-expand" });
 			setIcon(expandEl, "chevron-down");
@@ -3097,7 +3100,7 @@ Provide only the summary, no additional commentary.`;
 
 			// Click header to expand/collapse (synced across all groups)
 			headerEl.addEventListener("click", () => {
-				const isExpanded = contentEl.style.display !== "none";
+				const isExpanded = !contentEl.hasClass("crystal-hidden");
 
 				// Update global state
 				this.reasoningGroupsExpanded = !isExpanded;
@@ -3113,10 +3116,10 @@ Provide only the summary, no additional commentary.`;
 			// Start with global state (not always expanded)
 			if (this.reasoningGroupsExpanded) {
 				groupEl.addClass("expanded");
-				contentEl.style.display = "block";
+				contentEl.removeClass("crystal-hidden");
 				setIcon(expandEl, "chevron-up");
 			} else {
-				contentEl.style.display = "none";
+				contentEl.addClass("crystal-hidden");
 				setIcon(expandEl, "chevron-down");
 			}
 
@@ -3130,7 +3133,7 @@ Provide only the summary, no additional commentary.`;
 		// Update counter
 		const counterEl = this.currentReasoningGroup.element?.querySelector(".crystal-reasoning-group-counter") as HTMLElement;
 		if (counterEl && count > 1) {
-			counterEl.style.display = "inline";
+			counterEl.removeClass("crystal-hidden");
 			counterEl.setText(`(${count})`);
 		}
 
@@ -3152,8 +3155,8 @@ Provide only the summary, no additional commentary.`;
 		groups.forEach(group => {
 			const content = group.querySelector(".crystal-reasoning-group-content") as HTMLElement;
 			const expand = group.querySelector(".crystal-reasoning-group-expand");
-			if (content && content.style.display === "none") {
-				content.style.display = "block";
+			if (content && content.hasClass("crystal-hidden")) {
+				content.removeClass("crystal-hidden");
 				group.addClass("expanded");
 				if (expand) {
 					expand.empty();
@@ -3171,8 +3174,8 @@ Provide only the summary, no additional commentary.`;
 		groups.forEach(group => {
 			const content = group.querySelector(".crystal-reasoning-group-content") as HTMLElement;
 			const expand = group.querySelector(".crystal-reasoning-group-expand");
-			if (content && content.style.display !== "none") {
-				content.style.display = "none";
+			if (content && !content.hasClass("crystal-hidden")) {
+				content.addClass("crystal-hidden");
 				group.removeClass("expanded");
 				if (expand) {
 					expand.empty();
@@ -3187,45 +3190,46 @@ Provide only the summary, no additional commentary.`;
 
 		switch (tool.name) {
 			case "Read":
-				container.createDiv({ text: `Path: ${input.file_path}` });
-				if (input.offset) container.createDiv({ text: `Offset: ${input.offset}` });
-				if (input.limit) container.createDiv({ text: `Limit: ${input.limit}` });
+				container.createDiv({ text: `Path: ${String(input.file_path ?? "")}` });
+				if (input.offset) container.createDiv({ text: `Offset: ${String(input.offset)}` });
+				if (input.limit) container.createDiv({ text: `Limit: ${String(input.limit)}` });
 				break;
 
 			case "Grep":
-				container.createDiv({ text: `Pattern: ${input.pattern}` });
-				if (input.path) container.createDiv({ text: `Path: ${input.path}` });
-				if (input.glob) container.createDiv({ text: `Glob: ${input.glob}` });
+				container.createDiv({ text: `Pattern: ${String(input.pattern ?? "")}` });
+				if (input.path) container.createDiv({ text: `Path: ${String(input.path)}` });
+				if (input.glob) container.createDiv({ text: `Glob: ${String(input.glob)}` });
 				break;
 
 			case "Glob":
-				container.createDiv({ text: `Pattern: ${input.pattern}` });
-				if (input.path) container.createDiv({ text: `Path: ${input.path}` });
+				container.createDiv({ text: `Pattern: ${String(input.pattern ?? "")}` });
+				if (input.path) container.createDiv({ text: `Path: ${String(input.path)}` });
 				break;
 
 			case "Edit":
-				container.createDiv({ text: `File: ${input.file_path}` });
+				container.createDiv({ text: `File: ${String(input.file_path ?? "")}` });
 				break;
 
 			case "Write":
-				container.createDiv({ text: `File: ${input.file_path}` });
+				container.createDiv({ text: `File: ${String(input.file_path ?? "")}` });
 				break;
 
 			case "Delete":
-				container.createDiv({ text: `File: ${input.file_path}` });
+				container.createDiv({ text: `File: ${String(input.file_path ?? "")}` });
 				break;
 
 			case "WebSearch":
-				container.createDiv({ text: `Query: ${input.query}` });
+				container.createDiv({ text: `Query: ${String(input.query ?? "")}` });
 				break;
 
 			case "WebFetch":
-				container.createDiv({ text: `URL: ${input.url}` });
+				container.createDiv({ text: `URL: ${String(input.url ?? "")}` });
 				break;
 
-			default:
+			default: {
 				const pre = container.createEl("pre");
 				pre.setText(JSON.stringify(input, null, 2));
+			}
 		}
 	}
 
@@ -3310,51 +3314,59 @@ Provide only the summary, no additional commentary.`;
 		const input = tool.input as Record<string, unknown>;
 
 		switch (tool.name) {
-			case "Read":
-				const filePath = input.file_path as string || "";
+			case "Read": {
+				const filePath = String(input.file_path ?? "");
 				const fileName = filePath.split("/").pop() || filePath;
 				return `${locale.readingFile}: ${fileName}`;
+			}
 
 			case "Edit":
-			case "Write":
-				const editPath = input.file_path as string || "";
+			case "Write": {
+				const editPath = String(input.file_path ?? "");
 				const editName = editPath.split("/").pop() || editPath;
 				return tool.name === "Edit"
 					? `${locale.editingFile}: ${editName}`
 					: `${locale.writingFile}: ${editName}`;
+			}
 
-			case "Delete":
-				const deletePath = input.file_path as string || "";
+			case "Delete": {
+				const deletePath = String(input.file_path ?? "");
 				const deleteName = deletePath.split("/").pop() || deletePath;
 				return `${locale.deletingFile}: ${deleteName}`;
+			}
 
-			case "Grep":
-				const pattern = input.pattern as string || "";
+			case "Grep": {
+				const pattern = String(input.pattern ?? "");
 				return `${locale.searching}: "${pattern.substring(0, 30)}${pattern.length > 30 ? "..." : ""}"`;
+			}
 
-			case "Glob":
-				const globPattern = input.pattern as string || "";
+			case "Glob": {
+				const globPattern = String(input.pattern ?? "");
 				return `${locale.findingFiles}: ${globPattern}`;
+			}
 
 			case "WebSearch":
-			case "web_search":
-				const query = input.query as string || "";
+			case "web_search": {
+				const query = String(input.query ?? "");
 				return `${locale.webSearch}: "${query.substring(0, 30)}${query.length > 30 ? "..." : ""}"`;
+			}
 
-			case "WebFetch":
-				const url = input.url as string || "";
+			case "WebFetch": {
+				const url = String(input.url ?? "");
 				return `${locale.fetchingUrl}: ${url.substring(0, 40)}${url.length > 40 ? "..." : ""}`;
+			}
 
 			// Additional tools
-			case "thinking":
+			case "thinking": {
 				const summary = input.summary as string[] || [];
 				const firstSummary = summary[0];
 				if (firstSummary) {
 					return firstSummary.substring(0, 50) + (firstSummary.length > 50 ? "..." : "");
 				}
 				return locale.thinking || "Reasoning...";
+			}
 
-			case "file_change":
+			case "file_change": {
 				const changes = input.changes as Array<{ path: string; kind: string }> || [];
 				if (changes.length === 1 && changes[0]) {
 					const change = changes[0];
@@ -3362,27 +3374,32 @@ Provide only the summary, no additional commentary.`;
 					return `${change.kind}: ${name}`;
 				}
 				return `${changes.length} file changes`;
+			}
 
-			case "command_execution":
-				const bashCmd = input.command as string || "";
+			case "command_execution": {
+				const bashCmd = String(input.command ?? "");
 				const { action, details } = this.humanizeBashCommand(bashCmd, locale);
 				return details ? `${action}: ${details}` : action;
+			}
 
-			case "file_read":
-				const readPath = input.command as string || input.path as string || "";
+			case "file_read": {
+				const readPath = String(input.command ?? input.path ?? "");
 				const readName = readPath.split("/").pop() || readPath;
 				return `${locale.readingFile}: ${readName}`;
+			}
 
-			case "file_write":
-				const writePath = input.command as string || input.path as string || "";
+			case "file_write": {
+				const writePath = String(input.command ?? input.path ?? "");
 				const writeName = writePath.split("/").pop() || writePath;
 				return `${locale.writingFile}: ${writeName}`;
+			}
 
-			case "todo_list":
+			case "todo_list": {
 				const items = input.items as Array<{ text: string; completed: boolean }> || [];
 				return `Todo: ${items.length} items`;
+			}
 
-			default:
+			default: {
 				// Handle MCP tools (format: mcp:server:tool)
 				if (tool.name.startsWith("mcp:")) {
 					const parts = tool.name.split(":");
@@ -3391,6 +3408,7 @@ Provide only the summary, no additional commentary.`;
 					return `MCP: ${server}/${toolName}`;
 				}
 				return `${locale.usingTool} ${tool.name}`;
+			}
 		}
 	}
 
@@ -3470,10 +3488,10 @@ Provide only the summary, no additional commentary.`;
 		if (status === "error") {
 			this.statusEl.addClass("crystal-status-error");
 			this.statusEl.setText(message || "An error occurred");
-			this.statusEl.style.display = "block";
+			this.statusEl.removeClass("crystal-hidden");
 		} else {
 			// Hide status bar for non-error states
-			this.statusEl.style.display = "none";
+			this.statusEl.addClass("crystal-hidden");
 		}
 	}
 
@@ -3573,11 +3591,22 @@ Provide only the summary, no additional commentary.`;
 
 			// Extract command part (before any space)
 			const commandPart = value.split(" ")[0] ?? "/";
+			const hasSpaceAfterCommand = value.includes(" ");
+
 			this.filteredCommands = filterCommands(commands, commandPart);
 
 			// Hide /model command if session has started (model is locked)
 			if (this.sessionStarted) {
 				this.filteredCommands = this.filteredCommands.filter(cmd => cmd.command !== "/model");
+			}
+
+			// If user is typing an argument after a complete command, hide autocomplete
+			if (hasSpaceAfterCommand) {
+				const isExactMatch = this.filteredCommands.some(cmd => cmd.command === commandPart);
+				if (isExactMatch) {
+					this.hideAutocomplete();
+					return;
+				}
 			}
 
 			if (this.filteredCommands.length > 0) {
@@ -4075,8 +4104,8 @@ Provide only the summary, no additional commentary.`;
 		if (!contentEl || !actionsEl) return;
 
 		// Hide original content and actions
-		contentEl.style.display = "none";
-		actionsEl.style.display = "none";
+		contentEl.addClass("crystal-hidden");
+		actionsEl.addClass("crystal-hidden");
 
 		// Create edit container
 		const editContainer = messageEl.createDiv({ cls: "crystal-edit-container" });
@@ -4129,8 +4158,8 @@ Provide only the summary, no additional commentary.`;
 			// Show original content and actions
 			const contentEl = messageEl.querySelector(".crystal-message-content") as HTMLElement;
 			const actionsEl = messageEl.querySelector(".crystal-message-actions") as HTMLElement;
-			if (contentEl) contentEl.style.display = "block";
-			if (actionsEl) actionsEl.style.display = "flex";
+			if (contentEl) contentEl.removeClass("crystal-hidden");
+			if (actionsEl) actionsEl.removeClass("crystal-hidden");
 		}
 
 		this.editingMessageId = null;

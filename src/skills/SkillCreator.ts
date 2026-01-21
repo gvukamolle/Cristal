@@ -1,9 +1,14 @@
 import { App, Modal, Setting, Notice, TextComponent } from "obsidian";
+import * as fs from "fs";
+import * as path from "path";
 import type { SkillLoader } from "./SkillLoader";
 import type { SkillReference, Skill } from "./types";
 import { SkillParser } from "./SkillParser";
 import { getSettingsLocale, type SettingsLocale } from "../settingsLocales";
 import type { LanguageCode } from "../systemPrompts";
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { shell } = require("electron") as { shell: { openPath: (path: string) => Promise<string> } };
 
 /**
  * Modal for creating a new skill
@@ -40,11 +45,11 @@ export class CreateSkillModal extends Modal {
 		contentEl.empty();
 		contentEl.addClass('crystal-create-skill-modal');
 
-		contentEl.createEl('h2', { text: this.locale.createNewSkillTitle || 'Create New Skill' });
+		contentEl.createEl('h2', { text: this.locale.createNewSkillTitle || 'Create new skill' });
 
 		// Name field
 		new Setting(contentEl)
-			.setName(this.locale.skillNameField || 'Skill Name')
+			.setName(this.locale.skillNameField || 'Skill name')
 			.setDesc(this.locale.skillNameFieldDesc || 'Unique identifier in kebab-case (e.g., my-custom-skill)')
 			.addText(text => {
 				this.nameInput = text;
@@ -67,7 +72,7 @@ export class CreateSkillModal extends Modal {
 			});
 
 		// Optional folders section
-		contentEl.createEl('h3', { text: this.locale.optionalFolders || 'Optional Folders', cls: 'crystal-section-header' });
+		contentEl.createEl('h3', { text: this.locale.optionalFolders || 'Optional folders', cls: 'crystal-section-header' });
 
 		new Setting(contentEl)
 			.setName(this.locale.includeScripts || 'Include scripts/')
@@ -106,7 +111,7 @@ export class CreateSkillModal extends Modal {
 		cancelBtn.addEventListener('click', () => this.close());
 
 		const createBtn = buttonContainer.createEl('button', {
-			text: this.locale.createSkillButton || 'Create Skill',
+			text: this.locale.createSkillButton || 'Create skill',
 			cls: 'mod-cta'
 		});
 		createBtn.addEventListener('click', () => this.createSkill());
@@ -171,7 +176,7 @@ export class ValidateSkillModal extends Modal {
 		this.language = language;
 	}
 
-	async onOpen(): Promise<void> {
+	onOpen(): void {
 		const { contentEl } = this;
 		contentEl.empty();
 		contentEl.addClass('crystal-validate-skill-modal');
@@ -179,13 +184,8 @@ export class ValidateSkillModal extends Modal {
 		const title = (this.locale.validateSkillTitle || 'Validate: {name}').replace('{name}', this.skillId);
 		contentEl.createEl('h2', { text: title });
 
-		// Show loading
-		const loadingEl = contentEl.createEl('p', { text: this.locale.validating || 'Validating...' });
-
-		// Run validation
-		const result = await this.skillLoader.validateSkill(this.skillId);
-
-		loadingEl.remove();
+		// Run validation (synchronous now)
+		const result = this.skillLoader.validateSkill(this.skillId);
 
 		// Show result
 		if (result.isValid) {
@@ -255,7 +255,7 @@ export class SkillSelectorModal extends Modal {
 		contentEl.empty();
 		contentEl.addClass('crystal-skill-selector-modal');
 
-		contentEl.createEl('h2', { text: this.locale.selectSkillTitle || 'Select a Skill' });
+		contentEl.createEl('h2', { text: this.locale.selectSkillTitle || 'Select a skill' });
 
 		if (this.skills.length === 0) {
 			contentEl.createEl('p', {
@@ -356,7 +356,7 @@ export class EditSkillModal extends Modal {
 
 		// Resources section
 		contentEl.createEl('h3', {
-			text: this.locale.resourceFolders || 'Resource Folders',
+			text: this.locale.resourceFolders || 'Resource folders',
 			cls: 'crystal-section-header'
 		});
 
@@ -383,7 +383,7 @@ export class EditSkillModal extends Modal {
 
 		// Delete button (left side)
 		const deleteBtn = buttonContainer.createEl('button', {
-			text: this.locale.deleteSkillButton || 'Delete Skill',
+			text: this.locale.deleteSkillButton || 'Delete skill',
 			cls: 'crystal-delete-skill-btn'
 		});
 		deleteBtn.addEventListener('click', () => this.confirmDelete());
@@ -434,7 +434,7 @@ export class EditSkillModal extends Modal {
 
 		// Add files button
 		const addBtn = buttonsContainer.createEl('button', {
-			text: this.locale.addFilesButton || 'Add Files',
+			text: this.locale.addFilesButton || 'Add files',
 			cls: 'crystal-add-files-btn'
 		});
 		addBtn.addEventListener('click', () => {
@@ -443,7 +443,7 @@ export class EditSkillModal extends Modal {
 
 		// Open folder button
 		const openBtn = buttonsContainer.createEl('button', {
-			text: this.locale.openFolderButton || 'Open Folder',
+			text: this.locale.openFolderButton || 'Open folder',
 			cls: 'crystal-open-folder-btn'
 		});
 		openBtn.addEventListener('click', () => {
@@ -451,24 +451,23 @@ export class EditSkillModal extends Modal {
 		});
 	}
 
-	private async openResourceFolder(type: string): Promise<void> {
+	private openResourceFolder(type: string): void {
 		const folderPath = `${this.skill.path}/${type}`;
 
 		// Create folder if it doesn't exist
-		await this.skillLoader.ensureResourceFolder(this.skill.id, type);
+		this.skillLoader.ensureResourceFolder(this.skill.id, type);
 
 		// Open in system file manager
 		const vaultPath = this.skillLoader.getVaultPath();
 		if (vaultPath) {
 			const fullPath = `${vaultPath}/${folderPath}`;
-			const { shell } = require('electron');
 			shell.openPath(fullPath);
 		}
 	}
 
-	private async addFilesToResource(type: string): Promise<void> {
+	private addFilesToResource(type: string): void {
 		// Ensure folder exists
-		await this.skillLoader.ensureResourceFolder(this.skill.id, type);
+		this.skillLoader.ensureResourceFolder(this.skill.id, type);
 
 		const vaultPath = this.skillLoader.getVaultPath();
 		if (!vaultPath) return;
@@ -479,16 +478,13 @@ export class EditSkillModal extends Modal {
 		const fileInput = document.createElement('input');
 		fileInput.type = 'file';
 		fileInput.multiple = true;
-		fileInput.style.display = 'none';
+		fileInput.classList.add('crystal-hidden');
 
 		fileInput.addEventListener('change', async () => {
 			const files = fileInput.files;
 			if (!files || files.length === 0) return;
 
 			try {
-				const fs = require('fs');
-				const path = require('path');
-
 				// Copy selected files to resource folder
 				for (const file of Array.from(files)) {
 					const destPath = path.join(targetDir, file.name);
@@ -539,18 +535,19 @@ export class EditSkillModal extends Modal {
 	}
 
 	private confirmDelete(): void {
-		const confirmed = confirm(
+		new ConfirmDeleteSkillModal(
+			this.app,
+			this.skill.metadata.name,
 			(this.locale.confirmDeleteSkill || 'Are you sure you want to delete skill "{name}"?')
-				.replace('{name}', this.skill.metadata.name)
-		);
-
-		if (confirmed) {
-			this.deleteSkill();
-		}
+				.replace('{name}', this.skill.metadata.name),
+			this.locale.deleteSkillButton || 'Delete',
+			this.locale.closeButton || 'Cancel',
+			() => this.deleteSkill()
+		).open();
 	}
 
-	private async deleteSkill(): Promise<void> {
-		const result = await this.skillLoader.deleteSkill(this.skill.id);
+	private deleteSkill(): void {
+		const result = this.skillLoader.deleteSkill(this.skill.id);
 
 		if (result.success) {
 			new Notice(this.locale.skillDeleted || 'Skill deleted');
@@ -559,6 +556,56 @@ export class EditSkillModal extends Modal {
 		} else {
 			new Notice(result.error || this.locale.skillDeleteFailed || 'Failed to delete skill');
 		}
+	}
+
+	onClose(): void {
+		const { contentEl } = this;
+		contentEl.empty();
+	}
+}
+
+/**
+ * Confirmation modal for deleting a skill
+ */
+class ConfirmDeleteSkillModal extends Modal {
+	private message: string;
+	private deleteLabel: string;
+	private cancelLabel: string;
+	private onConfirm: () => void;
+
+	constructor(
+		app: App,
+		_skillName: string,
+		message: string,
+		deleteLabel: string,
+		cancelLabel: string,
+		onConfirm: () => void
+	) {
+		super(app);
+		this.message = message;
+		this.deleteLabel = deleteLabel;
+		this.cancelLabel = cancelLabel;
+		this.onConfirm = onConfirm;
+	}
+
+	onOpen(): void {
+		const { contentEl } = this;
+		contentEl.empty();
+		contentEl.addClass("crystal-confirm-delete-modal");
+
+		contentEl.createEl("p", { text: this.message });
+
+		new Setting(contentEl)
+			.addButton(btn => btn
+				.setButtonText(this.deleteLabel)
+				.setWarning()
+				.onClick(() => {
+					this.onConfirm();
+					this.close();
+				}))
+			.addButton(btn => btn
+				.setButtonText(this.cancelLabel)
+				.onClick(() => this.close()));
 	}
 
 	onClose(): void {

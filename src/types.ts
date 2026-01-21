@@ -109,7 +109,7 @@ export interface ChatSession {
 	messages: ChatMessage[];
 	createdAt: number;
 	title?: string;  // Auto-generated from first message
-	model?: ClaudeModel | string;  // Model used for this session
+	model?: ClaudeModel;  // Model used for this session
 	tokenStats?: SessionTokenStats;  // Token statistics for this session
 	agentId?: string;  // Which agent was used for this session
 }

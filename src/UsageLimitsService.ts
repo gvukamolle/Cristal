@@ -20,7 +20,7 @@ export class UsageLimitsService {
 
 	private log(...args: unknown[]): void {
 		if (this.debug) {
-			console.log("[UsageLimitsService]", ...args);
+			console.debug("[UsageLimitsService]", ...args);
 		}
 	}
 
@@ -79,7 +79,7 @@ export class UsageLimitsService {
 	/**
 	 * Linux/WSL: Get credentials from file
 	 */
-	private async getFromCredentialsFile(): Promise<string | null> {
+	private getFromCredentialsFile(): string | null {
 		const credPath = path.join(os.homedir(), ".claude", ".credentials.json");
 
 		try {

@@ -3940,3 +3940,23 @@
 	color: var(--text-on-accent);
 	transform: scale(1.02);
 }
+
+/* ============================================================================
+   Display utility classes (for linter compliance)
+   ============================================================================ */
+
+.crystal-hidden {
+	display: none !important;
+}
+
+.crystal-visible-block {
+	display: block !important;
+}
+
+.crystal-visible-flex {
+	display: flex !important;
+}
+
+.crystal-visible-inline {
+	display: inline !important;
+}

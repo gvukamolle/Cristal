@@ -47,7 +47,7 @@ export class CrystalSettingTab extends PluginSettingTab {
 
 	private displayUsageSection(containerEl: HTMLElement): void {
 		const usageSection = containerEl.createDiv({ cls: "crystal-usage-section" });
-		usageSection.createEl("h3", { text: this.locale.usageStatistics });
+		new Setting(usageSection).setName(this.locale.usageStatistics).setHeading();
 
 		// Calculate stats from plugin sessions
 		const stats = this.calculateUsageStats();
@@ -64,7 +64,7 @@ export class CrystalSettingTab extends PluginSettingTab {
 
 	private displayAccountLimitsSection(containerEl: HTMLElement): void {
 		const limitsSection = containerEl.createDiv({ cls: "crystal-account-limits" });
-		limitsSection.createEl("h4", { text: this.locale.accountLimits });
+		new Setting(limitsSection).setName(this.locale.accountLimits).setHeading();
 
 		// Container for limits data
 		const limitsContainer = limitsSection.createDiv({ cls: "crystal-limits-data" });
@@ -286,16 +286,16 @@ export class CrystalSettingTab extends PluginSettingTab {
 			};
 			this.plugin.settings.agents.push(agent);
 			this.plugin.settings.defaultAgentId = agent.id;
-			this.plugin.saveSettings();
+			void this.plugin.saveSettings();
 		}
 
-		containerEl.createEl("h3", { text: "Claude Code" });
+		new Setting(containerEl).setName("Claude Code").setHeading();
 
 		// Auto-detect CLI path on settings open
 		const detected = detectCLIPath(this.plugin.settings.simulateNodeMissing);
 		if (detected.found && agent.cliPath !== detected.path) {
 			agent.cliPath = detected.path;
-			this.plugin.saveSettings();
+			void this.plugin.saveSettings();
 		}
 
 		// CLI Status indicator (no path input - auto-detected)
@@ -320,19 +320,19 @@ export class CrystalSettingTab extends PluginSettingTab {
 					const firstEnabled = enabledModels[0];
 					if (firstEnabled) {
 						agent!.model = firstEnabled.value;
-						this.plugin.saveSettings();
+						void this.plugin.saveSettings();
 					}
 				}
 				dropdown
 					.setValue(agent!.model)
 					.onChange(async (value) => {
-						agent!.model = value as ClaudeModel | string;
+						agent!.model = value as ClaudeModel;
 						await this.plugin.saveSettings();
 					});
 			});
 
 		// Available Models section (toggles to disable models)
-		containerEl.createEl("h4", { text: this.locale.availableModels || "Available Models" });
+		new Setting(containerEl).setName(this.locale.availableModels || "Available models").setHeading();
 		containerEl.createEl("p", {
 			cls: "crystal-settings-note",
 			text: this.locale.availableModelsDesc || "Disable models you don't want to use"
@@ -371,7 +371,7 @@ export class CrystalSettingTab extends PluginSettingTab {
 
 		// Extended Thinking
 		new Setting(containerEl)
-			.setName(this.locale.extendedThinking || "Extended Thinking")
+			.setName(this.locale.extendedThinking || "Extended thinking")
 			.setDesc(this.locale.extendedThinkingDesc || "Enable deeper analysis mode for complex tasks")
 			.addToggle(toggle => toggle
 				.setValue(permissions.extendedThinking)
@@ -385,14 +385,14 @@ export class CrystalSettingTab extends PluginSettingTab {
 				}));
 
 		// Permissions section
-		containerEl.createEl("h4", { text: this.locale.agentPermissions });
+		new Setting(containerEl).setName(this.locale.agentPermissions).setHeading();
 		containerEl.createEl("p", {
 			cls: "crystal-settings-note",
 			text: this.locale.permissionsNote
 		});
 
 		// File Operations
-		containerEl.createEl("h5", { text: this.locale.fileOperations || "File Operations" });
+		new Setting(containerEl).setName(this.locale.fileOperations || "File operations").setHeading();
 
 		new Setting(containerEl)
 			.setName(this.locale.fileRead || "Read files")
@@ -434,7 +434,7 @@ export class CrystalSettingTab extends PluginSettingTab {
 				}));
 
 		// Web Operations
-		containerEl.createEl("h5", { text: this.locale.webOperations || "Web Operations" });
+		new Setting(containerEl).setName(this.locale.webOperations || "Web operations").setHeading();
 
 		new Setting(containerEl)
 			.setName(this.locale.webSearch)
@@ -463,7 +463,7 @@ export class CrystalSettingTab extends PluginSettingTab {
 				}));
 
 		// Advanced
-		containerEl.createEl("h5", { text: this.locale.advanced || "Advanced" });
+		new Setting(containerEl).setName(this.locale.advanced || "Advanced").setHeading();
 
 		new Setting(containerEl)
 			.setName(this.locale.subAgents)
@@ -531,7 +531,7 @@ export class CrystalSettingTab extends PluginSettingTab {
 			});
 			const terminalIcon = terminalBtn.createSpan({ cls: "crystal-btn-icon-left" });
 			setIcon(terminalIcon, "terminal");
-			terminalBtn.createSpan({ text: this.locale.openTerminal || "Open Terminal" });
+			terminalBtn.createSpan({ text: this.locale.openTerminal || "Open terminal" });
 
 			terminalBtn.addEventListener("click", () => {
 				this.launchCommand("claude");
@@ -633,7 +633,7 @@ export class CrystalSettingTab extends PluginSettingTab {
 		const agent = this.plugin.getAgentByCliType("claude");
 		if (!agent) return;
 
-		containerEl.createEl("h3", { text: this.locale.skills || "Skills" });
+		new Setting(containerEl).setName(this.locale.skills || "Skills").setHeading();
 
 		containerEl.createEl("p", {
 			cls: "crystal-settings-note",
@@ -641,7 +641,7 @@ export class CrystalSettingTab extends PluginSettingTab {
 		});
 
 		// Built-in skills
-		containerEl.createEl("h4", { text: this.locale.builtinSkills || "Built-in Skills" });
+		new Setting(containerEl).setName(this.locale.builtinSkills || "Built-in skills").setHeading();
 
 		const skillRefs = this.plugin.skillLoader?.getSkillReferences(this.plugin.settings.language) || [];
 		const enabledSkills = agent.enabledSkills || [];
@@ -660,7 +660,7 @@ export class CrystalSettingTab extends PluginSettingTab {
 		}
 
 		// Custom skills
-		containerEl.createEl("h4", { text: this.locale.customSkills || "Custom Skills" });
+		new Setting(containerEl).setName(this.locale.customSkills || "Custom skills").setHeading();
 
 		// Add custom skill button
 		new Setting(containerEl)
@@ -783,7 +783,7 @@ export class CrystalSettingTab extends PluginSettingTab {
 
 		// Content (hidden by default)
 		const content = section.createDiv({ cls: "crystal-collapsible-content" });
-		content.style.display = "none";
+		content.addClass("crystal-hidden");
 
 		// Simulate Node.js missing toggle
 		new Setting(content)
@@ -815,15 +815,15 @@ export class CrystalSettingTab extends PluginSettingTab {
 
 		// Toggle logic
 		header.addEventListener("click", () => {
-			const isHidden = content.style.display === "none";
-			content.style.display = isHidden ? "block" : "none";
+			const isHidden = content.hasClass("crystal-hidden");
+			content.toggleClass("crystal-hidden", !isHidden);
 			chevron.empty();
 			setIcon(chevron, isHidden ? "chevron-down" : "chevron-right");
 		});
 	}
 
 	private displaySlashCommandsSection(containerEl: HTMLElement): void {
-		containerEl.createEl("h3", { text: this.locale.slashCommands });
+		new Setting(containerEl).setName(this.locale.slashCommands).setHeading();
 
 		containerEl.createEl("p", {
 			cls: "crystal-settings-note",
@@ -831,7 +831,7 @@ export class CrystalSettingTab extends PluginSettingTab {
 		});
 
 		// Built-in commands
-		containerEl.createEl("h4", { text: this.locale.builtinCommands });
+		new Setting(containerEl).setName(this.locale.builtinCommands).setHeading();
 
 		const builtinCommands = getBuiltinCommands(this.plugin.settings.language);
 		for (const cmd of builtinCommands) {
@@ -854,7 +854,7 @@ export class CrystalSettingTab extends PluginSettingTab {
 		}
 
 		// Custom commands
-		containerEl.createEl("h4", { text: this.locale.customCommands });
+		new Setting(containerEl).setName(this.locale.customCommands).setHeading();
 
 		new Setting(containerEl)
 			.setName(this.locale.addCustomCommand)
@@ -976,7 +976,7 @@ export class CrystalSettingTab extends PluginSettingTab {
 	 */
 	private displayAgentSection(containerEl: HTMLElement): void {
 		const section = containerEl.createDiv({ cls: "crystal-settings-section" });
-		section.createEl("h3", { text: this.locale.agentSection });
+		new Setting(section).setName(this.locale.agentSection).setHeading();
 
 		// Get or create Claude agent
 		let agent = this.plugin.getAgentByCliType("claude");
@@ -996,7 +996,7 @@ export class CrystalSettingTab extends PluginSettingTab {
 			};
 			this.plugin.settings.agents.push(agent);
 			this.plugin.settings.defaultAgentId = agent.id;
-			this.plugin.saveSettings();
+			void this.plugin.saveSettings();
 		}
 
 		// Language dropdown
@@ -1033,13 +1033,13 @@ export class CrystalSettingTab extends PluginSettingTab {
 					const firstEnabled = enabledModels[0];
 					if (firstEnabled) {
 						agent!.model = firstEnabled.value;
-						this.plugin.saveSettings();
+						void this.plugin.saveSettings();
 					}
 				}
 				dropdown
 					.setValue(agent!.model)
 					.onChange(async (value) => {
-						agent!.model = value as ClaudeModel | string;
+						agent!.model = value as ClaudeModel;
 						await this.plugin.saveSettings();
 					});
 			});
@@ -1062,7 +1062,7 @@ export class CrystalSettingTab extends PluginSettingTab {
 	 */
 	private displayCommandsAndSkills(containerEl: HTMLElement): void {
 		const section = containerEl.createDiv({ cls: "crystal-settings-section" });
-		section.createEl("h3", { text: this.locale.commandsAndSkills });
+		new Setting(section).setName(this.locale.commandsAndSkills).setHeading();
 
 		// Summary line
 		const commandsCount = this.countEnabledCommands();
@@ -1110,15 +1110,15 @@ export class CrystalSettingTab extends PluginSettingTab {
 
 		// Content (hidden by default)
 		const content = section.createDiv({ cls: "crystal-collapsible-content" });
-		content.style.display = "none";
+		content.addClass("crystal-hidden");
 
 		// Render permissions content
 		this.renderPermissionsContent(content, agent);
 
 		// Toggle
 		header.addEventListener("click", () => {
-			const isHidden = content.style.display === "none";
-			content.style.display = isHidden ? "block" : "none";
+			const isHidden = content.hasClass("crystal-hidden");
+			content.toggleClass("crystal-hidden", !isHidden);
 			section.toggleClass("expanded", isHidden);
 			chevron.empty();
 			setIcon(chevron, isHidden ? "chevron-down" : "chevron-right");
@@ -1132,7 +1132,7 @@ export class CrystalSettingTab extends PluginSettingTab {
 		const permissions = agent.permissions || { ...DEFAULT_CLAUDE_PERMISSIONS };
 
 		// Available Models section
-		container.createEl("h4", { text: this.locale.availableModels || "Available Models" });
+		new Setting(container).setName(this.locale.availableModels || "Available models").setHeading();
 		container.createEl("p", {
 			cls: "crystal-settings-note",
 			text: this.locale.availableModelsDesc || "Disable models you don't want to use"
@@ -1170,9 +1170,9 @@ export class CrystalSettingTab extends PluginSettingTab {
 		}
 
 		// Extended Thinking
-		container.createEl("h4", { text: this.locale.extendedThinking || "Extended Thinking" });
+		new Setting(container).setName(this.locale.extendedThinking || "Extended thinking").setHeading();
 		new Setting(container)
-			.setName(this.locale.extendedThinking || "Extended Thinking")
+			.setName(this.locale.extendedThinking || "Extended thinking")
 			.setDesc(this.locale.extendedThinkingDesc || "Enable deeper analysis mode for complex tasks")
 			.addToggle(toggle => toggle
 				.setValue(permissions.extendedThinking)
@@ -1186,7 +1186,7 @@ export class CrystalSettingTab extends PluginSettingTab {
 				}));
 
 		// File Operations
-		container.createEl("h4", { text: this.locale.fileOperations || "File Operations" });
+		new Setting(container).setName(this.locale.fileOperations || "File operations").setHeading();
 
 		new Setting(container)
 			.setName(this.locale.fileRead || "Read files")
@@ -1228,7 +1228,7 @@ export class CrystalSettingTab extends PluginSettingTab {
 				}));
 
 		// Web Operations
-		container.createEl("h4", { text: this.locale.webOperations || "Web Operations" });
+		new Setting(container).setName(this.locale.webOperations || "Web operations").setHeading();
 
 		new Setting(container)
 			.setName(this.locale.webSearch)
@@ -1257,7 +1257,7 @@ export class CrystalSettingTab extends PluginSettingTab {
 				}));
 
 		// Advanced
-		container.createEl("h4", { text: this.locale.advanced || "Advanced" });
+		new Setting(container).setName(this.locale.advanced || "Advanced").setHeading();
 
 		new Setting(container)
 			.setName(this.locale.subAgents)
@@ -1284,7 +1284,7 @@ export class CrystalSettingTab extends PluginSettingTab {
 		const detected = detectCLIPath(this.plugin.settings.simulateNodeMissing);
 		if (detected.found && agent.cliPath !== detected.path) {
 			agent.cliPath = detected.path;
-			this.plugin.saveSettings();
+			void this.plugin.saveSettings();
 		}
 
 		const section = containerEl.createDiv({ cls: "crystal-collapsible-section" });
@@ -1300,15 +1300,15 @@ export class CrystalSettingTab extends PluginSettingTab {
 
 		// Content (hidden by default)
 		const content = section.createDiv({ cls: "crystal-collapsible-content" });
-		content.style.display = "none";
+		content.addClass("crystal-hidden");
 
 		// Render CLI status content
 		this.renderCliStatusContent(content, statusBadge, agent);
 
 		// Toggle
 		header.addEventListener("click", () => {
-			const isHidden = content.style.display === "none";
-			content.style.display = isHidden ? "block" : "none";
+			const isHidden = content.hasClass("crystal-hidden");
+			content.toggleClass("crystal-hidden", !isHidden);
 			section.toggleClass("expanded", isHidden);
 			chevron.empty();
 			setIcon(chevron, isHidden ? "chevron-down" : "chevron-right");
@@ -1376,7 +1376,7 @@ export class CrystalSettingTab extends PluginSettingTab {
 			const terminalBtn = terminalSection.createEl("button", { cls: "mod-cta" });
 			const terminalIcon = terminalBtn.createSpan({ cls: "crystal-btn-icon-left" });
 			setIcon(terminalIcon, "terminal");
-			terminalBtn.createSpan({ text: this.locale.openTerminal || "Open Terminal" });
+			terminalBtn.createSpan({ text: this.locale.openTerminal || "Open terminal" });
 			terminalBtn.addEventListener("click", () => {
 				this.launchCommand("claude");
 			});
@@ -1442,10 +1442,10 @@ class CommandsManagementModal extends Modal {
 		contentEl.empty();
 		contentEl.addClass("crystal-commands-modal");
 
-		contentEl.createEl("h2", { text: this.locale.commandsModalTitle });
+		new Setting(contentEl).setName(this.locale.commandsModalTitle).setHeading();
 
 		// Built-in commands
-		contentEl.createEl("h4", { text: this.locale.builtinCommands });
+		new Setting(contentEl).setName(this.locale.builtinCommands).setHeading();
 
 		const builtinCommands = getBuiltinCommands(this.plugin.settings.language);
 		for (const cmd of builtinCommands) {
@@ -1467,7 +1467,7 @@ class CommandsManagementModal extends Modal {
 		}
 
 		// Custom commands
-		contentEl.createEl("h4", { text: this.locale.customCommands });
+		new Setting(contentEl).setName(this.locale.customCommands).setHeading();
 
 		// Add custom command button
 		new Setting(contentEl)
@@ -1547,7 +1547,7 @@ class SkillsManagementModal extends Modal {
 		contentEl.empty();
 		contentEl.addClass("crystal-skills-modal");
 
-		contentEl.createEl("h2", { text: this.locale.skillsModalTitle });
+		new Setting(contentEl).setName(this.locale.skillsModalTitle).setHeading();
 
 		const agent = this.plugin.getAgentByCliType("claude");
 		if (!agent) {
@@ -1561,7 +1561,7 @@ class SkillsManagementModal extends Modal {
 		const customSkills = skillRefs.filter(s => !s.isBuiltin);
 
 		// Built-in skills
-		contentEl.createEl("h4", { text: this.locale.builtinSkills || "Built-in Skills" });
+		new Setting(contentEl).setName(this.locale.builtinSkills || "Built-in skills").setHeading();
 
 		if (builtinSkills.length === 0) {
 			contentEl.createEl("p", {
@@ -1575,7 +1575,7 @@ class SkillsManagementModal extends Modal {
 		}
 
 		// Custom skills
-		contentEl.createEl("h4", { text: this.locale.customSkills || "Custom Skills" });
+		new Setting(contentEl).setName(this.locale.customSkills || "Custom skills").setHeading();
 
 		// Add custom skill button
 		new Setting(contentEl)
@@ -1718,9 +1718,7 @@ class CommandModal extends Modal {
 		const { contentEl } = this;
 		contentEl.empty();
 
-		contentEl.createEl("h2", {
-			text: this.command ? this.locale.editCommand : this.locale.newCustomCommand
-		});
+		new Setting(contentEl).setName(this.command ? this.locale.editCommand : this.locale.newCustomCommand).setHeading();
 
 		// Name field
 		new Setting(contentEl)
@@ -1753,7 +1751,7 @@ class CommandModal extends Modal {
 			});
 
 		// Prompt field
-		const promptSetting = new Setting(contentEl)
+		new Setting(contentEl)
 			.setName(this.locale.promptField)
 			.setDesc(this.locale.promptFieldDesc);
 
@@ -1863,7 +1861,7 @@ class AgentPersonalizationModal extends Modal {
 		const header = contentEl.createDiv({ cls: "crystal-personalization-header" });
 		const headerIcon = header.createDiv({ cls: "crystal-personalization-header-icon" });
 		setIcon(headerIcon, "user");
-		header.createEl("h2", { text: this.locale.agentPersonalization });
+		new Setting(header).setName(this.locale.agentPersonalization).setHeading();
 
 		// Description
 		contentEl.createEl("p", {
