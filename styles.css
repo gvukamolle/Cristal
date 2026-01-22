@@ -1643,6 +1643,7 @@
 }
 
 .crystal-thinking-block.crystal-thinking-done .crystal-thinking-text {
+	animation: none;
 	opacity: 0.6;
 }
 
