@@ -461,7 +461,7 @@ export class EditSkillModal extends Modal {
 		const vaultPath = this.skillLoader.getVaultPath();
 		if (vaultPath) {
 			const fullPath = `${vaultPath}/${folderPath}`;
-			shell.openPath(fullPath);
+			void shell.openPath(fullPath);
 		}
 	}
 

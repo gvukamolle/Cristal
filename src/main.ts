@@ -57,7 +57,7 @@ export default class CrystalPlugin extends Plugin {
 		}
 
 		// Add ribbon icon to open chat
-		this.addRibbonIcon("gem", "Open Crystal", () => {
+		this.addRibbonIcon("gem", "Open chat", () => {
 			void this.activateView();
 		});
 
@@ -124,7 +124,7 @@ export default class CrystalPlugin extends Plugin {
 		this.addCommand({
 			id: "refresh-skills",
 			name: "Refresh skills",
-			callback: async () => {
+			callback: () => {
 				this.skillLoader.refresh();
 				this.syncAllAgentSkills();
 				const count = this.skillLoader.getSkillReferences().length;

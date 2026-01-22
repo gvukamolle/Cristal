@@ -545,7 +545,7 @@ export class SkillLoader {
 			await new Promise(resolve => setTimeout(resolve, 500));
 
 			// Refresh skills list
-			await this.refresh();
+			this.refresh();
 
 			return { success: true, path: `${SKILLS_FOLDER}/${name}` };
 		} catch (error) {
@@ -660,7 +660,7 @@ description: ${description}
 			fs.writeFileSync(skillMdPath, newContent, 'utf-8');
 
 			// Refresh skills
-			await this.refresh();
+			this.refresh();
 
 			return { success: true };
 		} catch (error) {

@@ -120,7 +120,7 @@ export class CrystalSettingTab extends PluginSettingTab {
 		}
 
 		const claudeSection = container.createDiv({ cls: "crystal-agent-limits" });
-		claudeSection.createEl("strong", { text: "Claude Code" });
+		claudeSection.createEl("strong", { text: "Claude code" });
 
 		// 5-hour limit (API returns 0-100 percentage)
 		this.createProgressBar(
@@ -292,7 +292,7 @@ export class CrystalSettingTab extends PluginSettingTab {
 		// Create const reference for callbacks (agent is guaranteed non-null after the above block)
 		const agentRef = agent;
 
-		new Setting(containerEl).setName("Claude Code").setHeading();
+		new Setting(containerEl).setName("Claude code").setHeading();
 
 		// Auto-detect CLI path on settings open
 		const detected = detectCLIPath(this.plugin.settings.simulateNodeMissing);
@@ -2261,12 +2261,12 @@ class DebugModeConfirmModal extends Modal {
 		const header = contentEl.createDiv({ cls: "crystal-debug-modal-header" });
 		const iconSpan = header.createSpan({ cls: "crystal-debug-modal-icon" });
 		setIcon(iconSpan, "alert-triangle");
-		header.createEl("h2", { text: "🧪 Активировать Debug Mode?" });
+		header.createEl("h2", { text: "Activate debug mode?" });
 
 		// Description
 		contentEl.createEl("p", {
 			cls: "crystal-debug-modal-desc",
-			text: "Вы нашли секретную функцию для тестирования интерфейса. Debug Mode позволяет симулировать различные состояния установки CLI и Node.js."
+			text: "You found a secret feature for testing the interface. Debug mode allows simulating various CLI and Node.js installation states."
 		});
 
 		contentEl.createEl("p", {
@@ -2279,7 +2279,7 @@ class DebugModeConfirmModal extends Modal {
 
 		// Cancel button (red, warning)
 		const cancelBtn = buttonContainer.createEl("button", {
-			text: "DON'T DO IT, THERE'S NOTHING INTERESTING",
+			text: "Don't do it, there's nothing interesting",
 			cls: "crystal-debug-cancel-btn"
 		});
 		cancelBtn.addEventListener("click", () => this.close());

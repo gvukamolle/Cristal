@@ -1762,6 +1762,21 @@
 	animation: crystal-group-appear 0.3s ease forwards;
 }
 
+/* Tool steps group - always expanded, fixed width */
+.crystal-tool-steps-group {
+	width: 100%;
+	max-width: 100%;
+}
+
+/* Non-collapsible header - no pointer cursor, no hover */
+.crystal-reasoning-group-header.crystal-no-collapse {
+	cursor: default;
+}
+
+.crystal-reasoning-group-header.crystal-no-collapse:hover {
+	background: transparent;
+}
+
 @keyframes crystal-group-appear {
 	from {
 		opacity: 0;

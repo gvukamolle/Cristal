@@ -4,7 +4,7 @@ import type { ChatMessage, SlashCommand, StreamingEvent, CompleteEvent, ResultEv
 import { CLAUDE_MODELS } from "./types";
 import { getAvailableCommands, filterCommands, parseCommand, buildCommandPrompt } from "./commands";
 import { getButtonLocale, type ButtonLocale } from "./buttonLocales";
-import { wrapHiddenInstructions, getSystemPrompt, type LanguageCode } from "./systemPrompts";
+import { wrapHiddenInstructions, getSystemPrompt } from "./systemPrompts";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -1257,57 +1257,44 @@ Provide only the summary, no additional commentary.`;
 	}
 
 	/**
-	 * Renders a collapsible tool steps group for historic messages
+	 * Renders tool steps group for historic messages (always expanded, shows last 3)
 	 */
 	private renderHistoricToolStepsGroup(container: HTMLElement, steps: ToolUseBlock[], locale: ButtonLocale): void {
-		const groupEl = container.createDiv({ cls: "crystal-reasoning-group crystal-tool-steps-group" });
+		// Get last tool for header icon/text
+		const lastTool = steps[steps.length - 1];
+		const toolType = lastTool ? this.getToolGroupType(lastTool) : "read";
+		const actionLabel = this.getActionLabel(toolType, locale);
 
-		// Header
-		const headerEl = groupEl.createDiv({ cls: "crystal-reasoning-group-header" });
+		// Create group (always expanded, not collapsible)
+		const groupEl = container.createDiv({ cls: "crystal-reasoning-group crystal-tool-steps-group expanded" });
+
+		// Header (non-clickable)
+		const headerEl = groupEl.createDiv({ cls: "crystal-reasoning-group-header crystal-no-collapse" });
 		const iconEl = headerEl.createSpan({ cls: "crystal-reasoning-icon" });
-		setIcon(iconEl, "brain");
+		setIcon(iconEl, actionLabel.icon);
 
 		const titleEl = headerEl.createSpan({ cls: "crystal-reasoning-group-title" });
-		titleEl.setText(locale.thinking || "Думает...");
+		titleEl.setText(actionLabel.text);
 
 		if (steps.length > 1) {
 			const counterEl = headerEl.createSpan({ cls: "crystal-reasoning-group-counter" });
 			counterEl.setText(`(${steps.length})`);
 		}
 
-		const expandEl = headerEl.createSpan({ cls: "crystal-reasoning-group-expand" });
-
-		// Content
+		// Content (always visible)
 		const contentEl = groupEl.createDiv({ cls: "crystal-reasoning-group-content crystal-tool-steps-content" });
+		contentEl.show();
 
-		for (const tool of steps) {
+		// Show only last 3 steps
+		const MAX_VISIBLE_STEPS = 3;
+		const visibleSteps = steps.slice(-MAX_VISIBLE_STEPS);
+
+		for (const tool of visibleSteps) {
 			const stepEl = contentEl.createDiv({ cls: "crystal-tool-step-item" });
 			const stepIconEl = stepEl.createSpan({ cls: "crystal-tool-step-icon" });
 			setIcon(stepIconEl, this.getToolIcon(tool.name));
 			const textEl = stepEl.createSpan({ cls: "crystal-tool-step-text" });
 			textEl.setText(this.formatToolStep(tool, locale));
-		}
-
-		// Click handler for expand/collapse
-		headerEl.addEventListener("click", () => {
-			const isExpanded = !contentEl.hasClass("crystal-hidden");
-			this.reasoningGroupsExpanded = !isExpanded;
-
-			if (this.reasoningGroupsExpanded) {
-				this.expandAllReasoningGroups();
-			} else {
-				this.collapseAllReasoningGroups();
-			}
-		});
-
-		// Apply global state
-		if (this.reasoningGroupsExpanded) {
-			groupEl.addClass("expanded");
-			contentEl.show();
-			setIcon(expandEl, "chevron-up");
-		} else {
-			contentEl.hide();
-			setIcon(expandEl, "chevron-down");
 		}
 	}
 
@@ -1327,7 +1314,8 @@ Provide only the summary, no additional commentary.`;
 			// Fallback: stringify JSON nicely
 			return JSON.stringify(input, null, 2);
 		}
-		return input != null ? String(input) : "";
+		// After string and object checks, remaining types are primitives or null/undefined
+		return "";
 	}
 
 	/**
@@ -1522,6 +1510,10 @@ Provide only the summary, no additional commentary.`;
 	}
 
 	private deleteSessionWithConfirm(sessionId: string): void {
+		// Remember if we're deleting the current session BEFORE deletion
+		const currentSessionBefore = this.plugin.getCurrentSession();
+		const isDeletingCurrentSession = currentSessionBefore?.id === sessionId;
+
 		// If only one session, create a new one first then delete old
 		if (this.plugin.sessions.length <= 1) {
 			const newSession = this.plugin.createNewSession();
@@ -1535,10 +1527,12 @@ Provide only the summary, no additional commentary.`;
 		this.plugin.deleteSession(sessionId);
 		this.updateSessionDropdown();
 
-		// If deleted current session, load the new current one
-		const currentSession = this.plugin.getCurrentSession();
-		if (currentSession) {
-			this.loadSession(currentSession);
+		// Only load new session if we deleted the current one
+		if (isDeletingCurrentSession) {
+			const currentSession = this.plugin.getCurrentSession();
+			if (currentSession) {
+				this.loadSession(currentSession);
+			}
 		}
 	}
 
@@ -1815,7 +1809,6 @@ Provide only the summary, no additional commentary.`;
 		});
 		btn.addEventListener("click", () => {
 			// Open plugin settings - using internal Obsidian API
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Obsidian internal API not exposed in types
 			const appWithSetting = this.app as unknown as { setting: { open: () => void; openTabById: (id: string) => void } };
 			appWithSetting.setting.open();
 			appWithSetting.setting.openTabById("crystal");
@@ -2328,11 +2321,24 @@ Provide only the summary, no additional commentary.`;
 		this.pendingButtonData = { messageEl: msgEl, content: this.currentAssistantContent, selectionContext, messageId: msgId };
 		this.buttonAddTimer = setTimeout(() => {
 			if (this.pendingButtonData) {
-				this.addCopyButton(
-					this.pendingButtonData.messageEl,
-					this.pendingButtonData.content,
-					this.pendingButtonData.selectionContext
-				);
+				const pendingMsgEl = this.pendingButtonData.messageEl;
+				// Check if there's a thinking block immediately after this message
+				const nextSibling = pendingMsgEl.nextElementSibling;
+				const hasThinkingAfter = nextSibling && nextSibling.hasClass("crystal-thinking-block");
+
+				if (!hasThinkingAfter) {
+					this.addCopyButton(
+						pendingMsgEl,
+						this.pendingButtonData.content,
+						this.pendingButtonData.selectionContext
+					);
+				} else {
+					// Mark as intermediate in history (it's between thinking blocks)
+					const msg = this.messages.find(m => m.id === this.pendingButtonData!.messageId);
+					if (msg) {
+						msg.isIntermediate = true;
+					}
+				}
 				this.pendingButtonData = null;
 			}
 			this.buttonAddTimer = null;
@@ -2840,11 +2846,11 @@ Provide only the summary, no additional commentary.`;
 
 		// Create new group if needed
 		if (!this.currentToolStepsGroup) {
-			// Create the group container (same style as reasoning groups)
-			const groupEl = this.currentThinkingSteps.createDiv({ cls: "crystal-reasoning-group crystal-tool-steps-group" });
+			// Create the group container (always expanded, not collapsible)
+			const groupEl = this.currentThinkingSteps.createDiv({ cls: "crystal-reasoning-group crystal-tool-steps-group expanded" });
 
-			// Group header (clickable to expand/collapse)
-			const headerEl = groupEl.createDiv({ cls: "crystal-reasoning-group-header" });
+			// Group header (non-clickable, just shows current action)
+			const headerEl = groupEl.createDiv({ cls: "crystal-reasoning-group-header crystal-no-collapse" });
 			const iconEl = headerEl.createSpan({ cls: "crystal-reasoning-icon" });
 			setIcon(iconEl, actionLabel.icon);
 
@@ -2854,35 +2860,9 @@ Provide only the summary, no additional commentary.`;
 			const counterEl = headerEl.createSpan({ cls: "crystal-reasoning-group-counter" });
 			counterEl.hide();
 
-			const expandEl = headerEl.createSpan({ cls: "crystal-reasoning-group-expand" });
-
-			// Content area for tool steps
+			// Content area for tool steps (always visible)
 			const contentEl = groupEl.createDiv({ cls: "crystal-reasoning-group-content crystal-tool-steps-content" });
-
-			// Click header to expand/collapse (synced across all groups)
-			headerEl.addEventListener("click", () => {
-				const isExpanded = !contentEl.hasClass("crystal-hidden");
-
-				// Update global state
-				this.reasoningGroupsExpanded = !isExpanded;
-
-				// Synchronized expand/collapse all groups
-				if (this.reasoningGroupsExpanded) {
-					this.expandAllReasoningGroups();
-				} else {
-					this.collapseAllReasoningGroups();
-				}
-			});
-
-			// Start with global state
-			if (this.reasoningGroupsExpanded) {
-				groupEl.addClass("expanded");
-				contentEl.show();
-				setIcon(expandEl, "chevron-up");
-			} else {
-				contentEl.hide();
-				setIcon(expandEl, "chevron-down");
-			}
+			contentEl.show();
 
 			this.currentToolStepsGroup = { tools: [tool], element: groupEl, contentEl, iconEl, titleEl };
 
@@ -2919,6 +2899,7 @@ Provide only the summary, no additional commentary.`;
 
 	/**
 	 * Adds a single tool step item inside the collapsible content area
+	 * Only shows the last 3 items, hides older ones
 	 */
 	private addToolStepToContent(container: HTMLElement, tool: ToolUseBlock, locale: ButtonLocale): void {
 		const stepEl = container.createDiv({ cls: "crystal-tool-step-item" });
@@ -2928,6 +2909,16 @@ Provide only the summary, no additional commentary.`;
 
 		const textEl = stepEl.createSpan({ cls: "crystal-tool-step-text" });
 		textEl.setText(this.formatToolStep(tool, locale));
+
+		// Limit visible items to last 3 - hide older ones
+		const MAX_VISIBLE_STEPS = 3;
+		const allSteps = container.querySelectorAll(".crystal-tool-step-item");
+		if (allSteps.length > MAX_VISIBLE_STEPS) {
+			// Hide all but the last 3
+			for (let i = 0; i < allSteps.length - MAX_VISIBLE_STEPS; i++) {
+				(allSteps[i] as HTMLElement).hide();
+			}
+		}
 	}
 
 	/**
@@ -3027,19 +3018,21 @@ Provide only the summary, no additional commentary.`;
 				break;
 			}
 			case "Read": {
-				line.setText(input.file_path != null ? String(input.file_path) : "");
+				line.setText(typeof input.file_path === "string" ? input.file_path : "");
 				break;
 			}
 			case "file_read": {
-				line.setText(input.file_path != null ? String(input.file_path) : "");
+				line.setText(typeof input.file_path === "string" ? input.file_path : "");
 				break;
 			}
 			case "Grep": {
-				line.setText(`${input.pattern != null ? String(input.pattern) : ""} ${input.path != null ? "в " + String(input.path) : ""}`);
+				const pattern = typeof input.pattern === "string" ? input.pattern : "";
+				const path = typeof input.path === "string" ? input.path : "";
+				line.setText(`${pattern} ${path ? "в " + path : ""}`);
 				break;
 			}
 			case "Glob": {
-				line.setText(input.pattern != null ? String(input.pattern) : "");
+				line.setText(typeof input.pattern === "string" ? input.pattern : "");
 				break;
 			}
 			case "todo_list": {
@@ -3158,9 +3151,12 @@ Provide only the summary, no additional commentary.`;
 	private expandAllReasoningGroups(): void {
 		const groups = this.messagesContainer.querySelectorAll(".crystal-reasoning-group");
 		groups.forEach(group => {
+			// Skip non-collapsible groups (tool steps)
+			if (group.querySelector(".crystal-no-collapse")) return;
+
 			const content = group.querySelector(".crystal-reasoning-group-content") as HTMLElement;
 			const expand = group.querySelector(".crystal-reasoning-group-expand");
-			if (content && content.hasClass("crystal-hidden")) {
+			if (content && !group.hasClass("expanded")) {
 				content.show();
 				group.addClass("expanded");
 				if (expand) {
@@ -3177,9 +3173,12 @@ Provide only the summary, no additional commentary.`;
 	private collapseAllReasoningGroups(): void {
 		const groups = this.messagesContainer.querySelectorAll(".crystal-reasoning-group");
 		groups.forEach(group => {
+			// Skip non-collapsible groups (tool steps)
+			if (group.querySelector(".crystal-no-collapse")) return;
+
 			const content = group.querySelector(".crystal-reasoning-group-content") as HTMLElement;
 			const expand = group.querySelector(".crystal-reasoning-group-expand");
-			if (content && !content.hasClass("crystal-hidden")) {
+			if (content && group.hasClass("expanded")) {
 				content.hide();
 				group.removeClass("expanded");
 				if (expand) {
@@ -3195,47 +3194,47 @@ Provide only the summary, no additional commentary.`;
 
 		switch (tool.name) {
 			case "Read": {
-				container.createDiv({ text: "Path: " + (input.file_path != null ? String(input.file_path) : "") });
-				if (input.offset != null) container.createDiv({ text: "Offset: " + String(input.offset) });
-				if (input.limit != null) container.createDiv({ text: "Limit: " + String(input.limit) });
+				container.createDiv({ text: "Path: " + (typeof input.file_path === "string" ? input.file_path : "") });
+				if (typeof input.offset === "number") container.createDiv({ text: "Offset: " + String(input.offset) });
+				if (typeof input.limit === "number") container.createDiv({ text: "Limit: " + String(input.limit) });
 				break;
 			}
 
 			case "Grep": {
-				container.createDiv({ text: "Pattern: " + (input.pattern != null ? String(input.pattern) : "") });
-				if (input.path != null) container.createDiv({ text: "Path: " + String(input.path) });
-				if (input.glob != null) container.createDiv({ text: "Glob: " + String(input.glob) });
+				container.createDiv({ text: "Pattern: " + (typeof input.pattern === "string" ? input.pattern : "") });
+				if (typeof input.path === "string") container.createDiv({ text: "Path: " + input.path });
+				if (typeof input.glob === "string") container.createDiv({ text: "Glob: " + input.glob });
 				break;
 			}
 
 			case "Glob": {
-				container.createDiv({ text: "Pattern: " + (input.pattern != null ? String(input.pattern) : "") });
-				if (input.path != null) container.createDiv({ text: "Path: " + String(input.path) });
+				container.createDiv({ text: "Pattern: " + (typeof input.pattern === "string" ? input.pattern : "") });
+				if (typeof input.path === "string") container.createDiv({ text: "Path: " + input.path });
 				break;
 			}
 
 			case "Edit": {
-				container.createDiv({ text: "File: " + (input.file_path != null ? String(input.file_path) : "") });
+				container.createDiv({ text: "File: " + (typeof input.file_path === "string" ? input.file_path : "") });
 				break;
 			}
 
 			case "Write": {
-				container.createDiv({ text: "File: " + (input.file_path != null ? String(input.file_path) : "") });
+				container.createDiv({ text: "File: " + (typeof input.file_path === "string" ? input.file_path : "") });
 				break;
 			}
 
 			case "Delete": {
-				container.createDiv({ text: "File: " + (input.file_path != null ? String(input.file_path) : "") });
+				container.createDiv({ text: "File: " + (typeof input.file_path === "string" ? input.file_path : "") });
 				break;
 			}
 
 			case "WebSearch": {
-				container.createDiv({ text: "Query: " + (input.query != null ? String(input.query) : "") });
+				container.createDiv({ text: "Query: " + (typeof input.query === "string" ? input.query : "") });
 				break;
 			}
 
 			case "WebFetch": {
-				container.createDiv({ text: "URL: " + (input.url != null ? String(input.url) : "") });
+				container.createDiv({ text: "URL: " + (typeof input.url === "string" ? input.url : "") });
 				break;
 			}
 
@@ -3328,51 +3327,51 @@ Provide only the summary, no additional commentary.`;
 
 		switch (tool.name) {
 			case "Read": {
-				const filePath = String(input.file_path ?? "");
+				const filePath = typeof input.file_path === "string" ? input.file_path : "";
 				const fileName = filePath.split("/").pop() || filePath;
 				return `${locale.readingFile}: ${fileName}`;
 			}
 
 			case "Edit": {
-				const editPath = String(input.file_path ?? "");
+				const editPath = typeof input.file_path === "string" ? input.file_path : "";
 				const editName = editPath.split("/").pop() || editPath;
 				return `${locale.editingFile}: ${editName}`;
 			}
 
 			case "Write": {
-				const writePath = String(input.file_path ?? "");
+				const writePath = typeof input.file_path === "string" ? input.file_path : "";
 				const writeName = writePath.split("/").pop() || writePath;
 				return `${locale.writingFile}: ${writeName}`;
 			}
 
 			case "Delete": {
-				const deletePath = String(input.file_path ?? "");
+				const deletePath = typeof input.file_path === "string" ? input.file_path : "";
 				const deleteName = deletePath.split("/").pop() || deletePath;
 				return `${locale.deletingFile}: ${deleteName}`;
 			}
 
 			case "Grep": {
-				const pattern = String(input.pattern ?? "");
+				const pattern = typeof input.pattern === "string" ? input.pattern : "";
 				return `${locale.searching}: "${pattern.substring(0, 30)}${pattern.length > 30 ? "..." : ""}"`;
 			}
 
 			case "Glob": {
-				const globPattern = String(input.pattern ?? "");
+				const globPattern = typeof input.pattern === "string" ? input.pattern : "";
 				return `${locale.findingFiles}: ${globPattern}`;
 			}
 
 			case "WebSearch": {
-				const query = String(input.query ?? "");
+				const query = typeof input.query === "string" ? input.query : "";
 				return `${locale.webSearch}: "${query.substring(0, 30)}${query.length > 30 ? "..." : ""}"`;
 			}
 
 			case "web_search": {
-				const query = String(input.query ?? "");
-				return `${locale.webSearch}: "${query.substring(0, 30)}${query.length > 30 ? "..." : ""}"`;
+				const webQuery = typeof input.query === "string" ? input.query : "";
+				return `${locale.webSearch}: "${webQuery.substring(0, 30)}${webQuery.length > 30 ? "..." : ""}"`;
 			}
 
 			case "WebFetch": {
-				const url = String(input.url ?? "");
+				const url = typeof input.url === "string" ? input.url : "";
 				return `${locale.fetchingUrl}: ${url.substring(0, 40)}${url.length > 40 ? "..." : ""}`;
 			}
 
@@ -3397,19 +3396,19 @@ Provide only the summary, no additional commentary.`;
 			}
 
 			case "command_execution": {
-				const bashCmd = String(input.command ?? "");
+				const bashCmd = typeof input.command === "string" ? input.command : "";
 				const { action, details } = this.humanizeBashCommand(bashCmd, locale);
 				return details ? `${action}: ${details}` : action;
 			}
 
 			case "file_read": {
-				const readPath = String(input.command ?? input.path ?? "");
+				const readPath = typeof input.command === "string" ? input.command : (typeof input.path === "string" ? input.path : "");
 				const readName = readPath.split("/").pop() || readPath;
 				return `${locale.readingFile}: ${readName}`;
 			}
 
 			case "file_write": {
-				const writePath = String(input.command ?? input.path ?? "");
+				const writePath = typeof input.command === "string" ? input.command : (typeof input.path === "string" ? input.path : "");
 				const writeName = writePath.split("/").pop() || writePath;
 				return `${locale.writingFile}: ${writeName}`;
 			}
@@ -3770,7 +3769,7 @@ Provide only the summary, no additional commentary.`;
 			// Auto-send command that doesn't need arguments
 			this.inputEl.value = command.command;
 			this.hideAutocomplete();
-			this.sendMessage();
+			void this.sendMessage();
 		}
 	}
 
@@ -4068,12 +4067,12 @@ Provide only the summary, no additional commentary.`;
 
 	private removeAttachedFile(fileName: string): void {
 		this.attachedFiles = this.attachedFiles.filter(f => f.name !== fileName);
-		this.updateFileContextIndicator();
+		void this.updateFileContextIndicator();
 	}
 
 	private clearAttachedFiles(): void {
 		this.attachedFiles = [];
-		this.updateFileContextIndicator();
+		void this.updateFileContextIndicator();
 	}
 
 	private cleanupTempFiles(): void {
@@ -4182,7 +4181,7 @@ Provide only the summary, no additional commentary.`;
 			text: locale.resend
 		});
 		submitBtn.addEventListener("click", () => {
-			this.submitEditedMessage(messageEl, textarea.value, messageId);
+			void this.submitEditedMessage(messageEl, textarea.value, messageId);
 		});
 
 		// Focus textarea

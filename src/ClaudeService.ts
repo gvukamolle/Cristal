@@ -3,7 +3,7 @@ import { EventEmitter } from "events";
 import * as os from "os";
 import * as fs from "fs";
 import * as path from "path";
-import type { CLIMessage, InitMessage, ResultMessage, ConversationMessage, CompactBoundaryMessage, ContentBlock, TextBlock, ToolUseBlock, ClaudePermissions, PendingMessage } from "./types";
+import type { CLIMessage, ContentBlock, TextBlock, ClaudePermissions, PendingMessage } from "./types";
 
 export class ClaudeService extends EventEmitter {
 	// Map of sessionId -> ChildProcess for parallel session support
