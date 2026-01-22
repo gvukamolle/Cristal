@@ -518,7 +518,7 @@ export class EditSkillModal extends Modal {
 		fileInput.click();
 	}
 
-	private async saveSkill(newInstructions: string): Promise<void> {
+	private saveSkill(newInstructions: string): void {
 		const descInput = this.contentEl.querySelector('input[data-field="description"]') as HTMLInputElement;
 		const newDescription = descInput?.value.trim() || this.skill.metadata.description;
 
